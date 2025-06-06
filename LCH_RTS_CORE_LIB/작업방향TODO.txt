@@ -1,0 +1,19 @@
+* 25/03/12
+lock 대신 ReadWriteLockSlim을 사용해서 ScopeWriteLock, ScopeReadLock으로 읽기/쓰기 락을 구분해보자 (lock함수는 중첩가능 쓰기 락)
+
+C# Tcp 채팅예제 보고 최신화 하기 (C# 9.0으로 코딩)
+//https://m.blog.naver.com/jungwan82/221174937147
+
+
+* 25/03/31
+Connect되면 Map에 로그인하고 cube Unit Spawn해서 앞으로 전진까지 구현
+
+* 25/04/13
+커넥션 되서 맵로드까지 되었고
+클라에서 유닛 스폰을 요청해서 적 타워 근처에 스폰을 시킴
+유닛 이동, 타워 공격
+타워는 유닛 공격 
+MatchRoom Tick 구현 필요
+
+
+#TODO: 나중에 ArraySegment를 Span/ReadOnlySpan이나 Memory로 변경하는걸 고려

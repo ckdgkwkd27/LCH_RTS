@@ -1,0 +1,89 @@
+table Vec2 { 
+  x:float; 
+  y:float;
+}
+
+table UnitStat {
+    attack: int32;
+    MaxHp: int32;
+    CurrHp: int32;
+    speed: float;
+    cost: int32;
+    range: float;
+}
+
+// Packets
+enum PACKET_ID : ushort {
+    CS_GREET = 1,
+    SC_GREET = 2,
+    CS_LOGIN,
+    SC_LOGIN,
+    CS_MATCH_START,
+    SC_ENTER_GAME,
+    CS_UNIT_SPAWN,
+    SC_UNIT_SPAWN,
+    SC_UNIT_MOVE,
+    SC_UNIT_ATTACK,
+    SC_REMOVE_UNIT,
+    SC_END_GAME,
+    SC_ENTER_LOBBY,    
+    
+    PACKET_MAX
+}
+
+table CS_GREET {
+    data: string;
+}
+
+table SC_GREET {
+    values: [int32];
+    answer: string;
+}
+
+table CS_MATCH_START {
+    unit_id: int64;
+    player_id: int64;
+}
+
+table SC_LOGIN {
+    player_id: int64;
+}
+
+table SC_ENTER_GAME {
+    room_id: int64;
+    blue_player_id: int64;
+    red_player_id: int64;
+}
+
+table CS_UNIT_SPAWN {
+    room_id: int64;
+    unit_type: int32;
+    create_pos: Vec2;
+}
+
+table SC_UNIT_SPAWN {
+    unit_id: int64;
+    player_side: int8;
+    unit_type: int32;
+    create_pos: Vec2;
+    unit_stat: UnitStat;
+}
+
+table SC_UNIT_MOVE {
+    room_id: int64;
+    unit_id: int64;
+    unit_type: int32;
+    now_pos: Vec2;
+}
+
+table SC_UNIT_ATTACK {
+    room_id: int64;
+    attacker_id: int64;
+    victim_id: int64;
+    remain_hp: int32;
+}
+    
+table SC_REMOVE_UNIT {
+    room_id: int64;
+    unit_id: int64;
+}
