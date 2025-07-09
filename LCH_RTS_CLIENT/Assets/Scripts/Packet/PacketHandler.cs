@@ -18,21 +18,36 @@ public class PacketHandler
     public static void SC_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer) 
     {
         var packet = SC_ENTER_GAME.GetRootAsSC_ENTER_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
-        Debug.Log($"RoomId={packet.RoomId}, blueId = {packet.BluePlayerId}, redId = {packet.RedPlayerId}");
-        SceneManager.LoadScene("PlayScene");
-        var playerId = PlayerInfo.Instance.PlayerId;
-        var playerSide = playerId == packet.BluePlayerId ? EPlayerSide.Blue : EPlayerSide.Red;
+        Debug.Log($"RoomId={packet.RoomId}, blueId = {packet.BluePlayerId}, redId = {packet.RedPlayerId}, Cost={packet.CurrCost}");
 
-        var go = GameObject.Find("GameRoomScene");
-        if (go != null)
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        tempPacket = packet;
+
+        SceneManager.LoadScene("PlayScene");
+    }
+
+    private static SC_ENTER_GAME tempPacket;
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        if (scene.name == "PlayScene")
         {
-            var roomScene = go.GetComponent<GameRoomScene>();
-            if (roomScene != null)
+            var playerId = PlayerInfo.Instance.PlayerId; 
+            Debug.Log($"[TEST] PlayerId={playerId}");
+            var playerSide = playerId == tempPacket.BluePlayerId ? EPlayerSide.Blue : EPlayerSide.Red;
+
+            var go = GameObject.Find("GameRoomScene");
+            if (go != null)
             {
-                roomScene.Init(packet.RoomId, playerId, playerSide, 0, 10);
+                var roomScene = go.GetComponent<GameRoomScene>();
+                if (roomScene != null)
+                {
+                    roomScene.Init(tempPacket.RoomId, playerId, playerSide, tempPacket.CurrCost, 10);
+                    PlayerInfo.Instance.SetRoomId(tempPacket.RoomId);
+                }
             }
         }
-        Managers.Network.Send(PacketUtil.CS_UNIT_SPAWN_PACKET(packet.RoomId, 1, new Vector2(34.0f, 18f)));
     }
 
     public static void SC_UNIT_SPAWN_Handler(PacketSession session, ArraySegment<byte> buffer) 
@@ -52,7 +67,7 @@ public class PacketHandler
         var stat = packet.UnitStat.Value;
         var playerSide = packet.PlayerSide;
 
-        Debug.Log($"UnitId={packet.UnitId}, PlayerSide={playerSide}, UnitType={packet.UnitType}, (X,Y)=({pos.x},{pos.y}), Range={stat.Range}");
+        Debug.Log($"UnitId={packet.UnitId},PlayerSide={playerSide},UnitType={packet.UnitType},Pos=({pos.x},{pos.y}),Range={stat.AttackRange},Sight={stat.Sight}");
         Managers.Object.Add(packet.UnitId, (EPlayerSide)playerSide, packet.UnitType, pos, BaseStat.ConvertFrom(stat));
     }
 
@@ -73,18 +88,29 @@ public class PacketHandler
     public static void SC_UNIT_ATTACK_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = SC_UNIT_ATTACK.GetRootAsSC_UNIT_ATTACK(new ByteBuffer(buffer.Array, buffer.Offset));
-        var go = Managers.Object.FindById(packet.VictimId);
-        if (go == null)
+        var victimObject = Managers.Object.FindById(packet.VictimId);
+        if (victimObject is null)
         {
             Debug.LogError($"Victim={packet.VictimId} is null");
             return;
         }
 
-        UnitBaseController uc = go.GetComponent<UnitBaseController>();
-        uc.Stat.CurrHp = packet.RemainHp;
-        uc.OnTakeDamage(packet.RemainHp);
+        var attackerObject = Managers.Object.FindById(packet.AttackerId);
+        if(attackerObject is null)
+        {
+            Debug.LogError($"Attacker={packet.AttackerId} is null");
+            return;
+        }
 
-        Debug.Log($"{packet.AttackerId} attacked {packet.VictimId} => {(float)uc.Stat.CurrHp / uc.Stat.MaxHp}");
+        UnitBaseController attackerUc = attackerObject.GetComponent<UnitBaseController>();
+        UnitBaseController victimUc = victimObject.GetComponent<UnitBaseController>();
+
+        attackerUc.OnAttack(victimUc);
+
+        victimUc.Stat.CurrHp = packet.RemainHp;
+        victimUc.OnTakeDamage(packet.RemainHp);
+
+        //Debug.Log($"{packet.AttackerId} attacked {packet.VictimId} => {(float)victimUc.Stat.CurrHp / victimUc.Stat.MaxHp}");
     }
 
     public static void SC_REMOVE_UNIT_Handler(PacketSession session, ArraySegment<byte> buffer)
@@ -97,7 +123,33 @@ public class PacketHandler
             return;
         }
 
+        UnitBaseController ubc = go.GetComponent<UnitBaseController>();
+        if (ubc != null)
+        {
+            ubc.OnRemove();
+        }
+
         Managers.Object.Remove(packet.UnitId);
         Debug.Log($"Unit={packet.UnitId} remove Success");
+    }
+
+    public static void SC_PLAYER_COST_UPDATE_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = SC_PLAYER_COST_UPDATE.GetRootAsSC_PLAYER_COST_UPDATE(new ByteBuffer(buffer.Array, buffer.Offset));
+        var go = GameObject.Find("player");
+        if (go == null)
+        {
+            Debug.LogError($"CostUpdate Player is null");
+            return;
+        }
+
+        var pc = go.GetComponent<PlayerController>();
+        if (pc == null)
+        {
+            Debug.LogError($"CostUpdate PC is null");
+            return;
+        }
+
+        pc.SetCost(packet.RemainCost);
     }
 }

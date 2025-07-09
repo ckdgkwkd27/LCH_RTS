@@ -20,11 +20,13 @@ public class ClientSession : PacketSession
 
         var player = PlayerManager.Instance.AddPlayer(this);
         var room = GameRoomManager.Instance.GetRoom(1);
-        
+        if(room is null) return;
         Send(PacketUtil.SC_LOGIN_PACKET(player.PlayerId));
-        Send(PacketUtil.SC_ENTER_GAME_PACKET(1, 1, 2));
         
-        room?.AddPlayer(player, EPlayerSide.Blue);
+        room.AddPlayer(player);
+        Send(PacketUtil.SC_ENTER_GAME_PACKET(1, room.GetPlayerId(EPlayerSide.Blue), room.GetPlayerId(EPlayerSide.Red), 0));
+        
+        room.GameReady();
     }
     
     public override void OnDisconnected(EndPoint endPoint)

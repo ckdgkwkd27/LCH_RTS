@@ -17,7 +17,6 @@ public class Tower : UnitBase
         StatusActions = new Dictionary<EUnitStatus, Action>
         {
             { EUnitStatus.Attack, UpdateAttack },
-            { EUnitStatus.Dead, UpdateDead }
         };
         
         TowerType = towerType;
@@ -25,7 +24,7 @@ public class Tower : UnitBase
 
     public override void Update()
     {
-        if (Status is EUnitStatus.Idle or EUnitStatus.Dead or EUnitStatus.Chase) 
+        if (Status is EUnitStatus.Idle or EUnitStatus.Chase) 
             return;
 
         if (StatusActions.TryGetValue(Status, out var action))
@@ -55,7 +54,7 @@ public class Tower : UnitBase
         gameRoom.Broadcast(PacketUtil.SC_UNIT_ATTACK_PACKET(RoomId, UnitId, Target.UnitId, remainHp));
         if (remainHp >= 0)
         {
-            var stat = UnitUtil.CreateUnitStat(Target.Stat.Attack, Target.Stat.MaxHp, remainHp, Target.Stat.Speed, Target.Stat.Cost, Target.Stat.Range);
+            var stat = UnitUtil.CreateUnitStat(Target.Stat.Attack, Target.Stat.MaxHp, remainHp, Target.Stat.Speed, Target.Stat.Cost, Target.Stat.AttackRange, Target.Stat.Sight);
             Target.Stat =  stat;
             return;
         }
@@ -71,7 +70,7 @@ public class Tower : UnitBase
             return;
         }
         
-        foreach (var unit in enemyUnits.Where(unit => UnitUtil.GetDistanceSquare(Pos, unit.Pos) < Stat.Range * Stat.Range))
+        foreach (var unit in enemyUnits.Where(unit => UnitUtil.GetDistanceSquare(Pos, unit.Pos) < Stat.AttackRange * Stat.AttackRange))
         {
             if(unit is not Unit) 
                 continue;
@@ -82,5 +81,15 @@ public class Tower : UnitBase
         }
 
         Target = null;
+    }
+
+    protected override void OnDead(long roomId, EPlayerSide winnerSide, EPlayerSide loserSide)
+    {
+        if (TowerType == ETowerType.King)
+        {
+            //#TODO: Room에 GameEnd Notify;
+            
+            Console.WriteLine($"Game Finish.Winner={winnerSide},Loser={loserSide}");
+        }
     }
 }

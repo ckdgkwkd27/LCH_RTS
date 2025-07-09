@@ -357,6 +357,8 @@ MonoBehaviour:
   canvasPos: {x: 0, y: 4.7, z: -2.18}
   canvasRot: {x: 88.325, y: 45.382, z: 46.207}
   canvasScale: {x: 1, y: 0.5, z: 1}
+  _shootDelay: 1
+  _bullet: {fileID: 1240887441953726, guid: 580faf90a35923141b53856203cf9bfb, type: 3}
 --- !u!1 &1121474286941022
 GameObject:
   m_ObjectHideFlags: 0

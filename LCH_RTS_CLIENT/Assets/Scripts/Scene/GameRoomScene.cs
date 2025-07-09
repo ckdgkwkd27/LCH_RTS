@@ -10,7 +10,6 @@ public class GameRoomScene : MonoBehaviour
         GameObject go = new GameObject();
         go.name = "player";
         go.AddComponent<PlayerController>();
-        Instantiate(go);
 
         var playerController = go.GetComponent<PlayerController>();
         playerController.Init(playerId, roomId, playerSide, currCost, maxCost);

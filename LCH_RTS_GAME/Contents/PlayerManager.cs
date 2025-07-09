@@ -10,7 +10,7 @@ public sealed class PlayerManager
     private readonly Lock _lock = new();
     
     // ReSharper disable once InconsistentNaming
-    private static long LAST_PLAYER_ID = 0;
+    private static long LAST_PLAYER_ID = 1;
     
     public Player AddPlayer(ClientSession session)
     {

@@ -769,8 +769,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasPos: {x: -0.17, y: 4.87, z: 2.11}
-  canvasRot: {x: 88.316, y: 45.075, z: 46.515}
+  canvasRot: {x: 90, y: 50, z: 50}
   canvasScale: {x: 1, y: 0.5, z: 1}
+  _shootDelay: 1
+  _bullet: {fileID: 1103188170192778, guid: f2e45bfe32a72a54ebf41b13cf471c44, type: 3}
 --- !u!1 &1981796556527606
 GameObject:
   m_ObjectHideFlags: 0

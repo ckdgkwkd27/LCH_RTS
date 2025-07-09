@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 using Google.FlatBuffers;
 
 public enum EPlayerSide
@@ -22,8 +23,7 @@ namespace LCH_RTS.Contents.Units
         Idle,
         Moving,
         Attack,
-        Chase,
-        Dead,
+        Chase
     }
     
     public class UnitBase
@@ -71,10 +71,17 @@ namespace LCH_RTS.Contents.Units
                 return;
             }
         
-            foreach (var unit in enemyUnits.Where(unit => UnitUtil.GetDistanceSquare(Pos, unit.Pos) < Stat.Range * Stat.Range))
+            foreach (var unit in enemyUnits.Where(unit => UnitUtil.GetDistanceSquare(Pos, unit.Pos) < Stat.AttackRange * Stat.AttackRange))
             {
                 Status = EUnitStatus.Attack;
                 Target = unit;     
+                return;
+            }
+
+            foreach (var unit in enemyUnits.Where(unit => UnitUtil.GetDistanceSquare(Pos, unit.Pos) < Stat.Sight * Stat.Sight))
+            {
+                Status = EUnitStatus.Chase;
+                Target = unit;
                 return;
             }
 
@@ -102,8 +109,11 @@ namespace LCH_RTS.Contents.Units
 
         protected virtual void UpdateAttack()
         {
-            if (Target is null) 
+            if (Target is null)
+            {
+                Status = EUnitStatus.Moving;
                 return;
+            }
 
             var gameRoom = GameRoomManager.Instance.GetRoom(RoomId);
             if (gameRoom is null)
@@ -116,17 +126,18 @@ namespace LCH_RTS.Contents.Units
             gameRoom.Broadcast(PacketUtil.SC_UNIT_ATTACK_PACKET(RoomId, UnitId, Target.UnitId, remainHp));
             if (remainHp >= 0)
             {
-                var stat = UnitUtil.CreateUnitStat(Target.Stat.Attack, Target.Stat.MaxHp, remainHp, Target.Stat.Speed, Target.Stat.Cost, Target.Stat.Range);
-                Target.Stat =  stat;
+                var stat = UnitUtil.CreateUnitStat(Target.Stat.Attack, Target.Stat.MaxHp, remainHp, Target.Stat.Speed, Target.Stat.Cost, Target.Stat.AttackRange, Target.Stat.Sight);
+                Target.Stat = stat;
                 return;
             }
 
+            Target.OnDead(RoomId, PlayerSide, Target.PlayerSide);
             gameRoom.RemoveUnit(Target);
             Target = null;
             Status = EUnitStatus.Moving;
         }
 
-        protected virtual void UpdateDead()
+        protected virtual void OnDead(long roomId, EPlayerSide winnerSide, EPlayerSide loserSide)
         {
             
         }

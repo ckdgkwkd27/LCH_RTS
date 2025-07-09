@@ -26,7 +26,7 @@ public class ObjectManager
         GameObject go = Managers.Resource.Instantiate($"Unit/{sideName}/{unitName}");
         go.name = unitName + unitId.ToString();
         go.transform.position = new Vector3(pos.x, pos.y, -6.7f);
-        go.transform.Rotate(new Vector3(92f, 54f, 54f));
+        go.transform.Rotate(new Vector3(90f, 50f, 50f));
 
         UnitBaseController uc = go.GetComponent<UnitBaseController>();
         if (uc is null)
@@ -58,6 +58,17 @@ public class ObjectManager
         }
 
         return null;
+    }
+
+    public List<GameObject> FindAll(Func<GameObject, bool> condition)
+    {
+        List<GameObject> gameObjects = new List<GameObject>();
+        foreach(GameObject _go in _objects.Values)
+        {
+            if (condition.Invoke(_go))
+                gameObjects.Add(_go);
+        }
+        return gameObjects;
     }
 
     public void Clear()

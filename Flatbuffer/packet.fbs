@@ -5,11 +5,12 @@ table Vec2 {
 
 table UnitStat {
     attack: int32;
-    MaxHp: int32;
-    CurrHp: int32;
+    maxHp: int32;
+    currHp: int32;
     speed: float;
     cost: int32;
-    range: float;
+    attack_range: float;
+    sight: float;
 }
 
 // Packets
@@ -27,6 +28,7 @@ enum PACKET_ID : ushort {
     SC_REMOVE_UNIT,
     SC_END_GAME,
     SC_ENTER_LOBBY,    
+    SC_PLAYER_COST_UPDATE,
     
     PACKET_MAX
 }
@@ -53,6 +55,7 @@ table SC_ENTER_GAME {
     room_id: int64;
     blue_player_id: int64;
     red_player_id: int64;
+    curr_cost: int32;
 }
 
 table CS_UNIT_SPAWN {
@@ -87,3 +90,9 @@ table SC_REMOVE_UNIT {
     room_id: int64;
     unit_id: int64;
 }
+
+table SC_PLAYER_COST_UPDATE {
+    room_id: int64;
+    remain_cost: int32;
+}
+

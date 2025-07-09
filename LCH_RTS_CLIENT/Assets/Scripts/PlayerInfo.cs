@@ -3,9 +3,11 @@ using UnityEngine;
 
 public class PlayerInfo : ScriptableObject
 {
-    [SerializeField]
     private long _playerId;
     public long PlayerId => _playerId;
+
+    private long _roomId;
+    public long RoomId => _roomId;
 
 
     private static PlayerInfo _instance;
@@ -25,5 +27,10 @@ public class PlayerInfo : ScriptableObject
     public void SetPlayerId(long playerId)
     {
         _playerId = playerId;
+    }
+
+    public void SetRoomId(long roomId) 
+    {
+        _roomId = roomId;
     }
 }

@@ -1,6 +1,3 @@
-using System.Resources;
-using System.Runtime.Serialization;
-using UnityEditor.EditorTools;
 using UnityEngine;
 
 public class Managers : MonoBehaviour

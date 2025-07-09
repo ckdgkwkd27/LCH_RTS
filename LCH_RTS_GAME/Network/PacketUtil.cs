@@ -21,13 +21,14 @@ public static class PacketUtil
         return stream;
     }
     
-    public static byte[] SC_ENTER_GAME_PACKET(long roomId, long bluePlayerId, long redPlayerId)
+    public static byte[] SC_ENTER_GAME_PACKET(long roomId, long bluePlayerId, long redPlayerId, int currCost)
     {
         var builder = new FlatBufferBuilder(1024);
         SC_ENTER_GAME.StartSC_ENTER_GAME(builder);
         SC_ENTER_GAME.AddRoomId(builder, roomId);
         SC_ENTER_GAME.AddBluePlayerId(builder, bluePlayerId);
         SC_ENTER_GAME.AddRedPlayerId(builder, redPlayerId);
+        SC_ENTER_GAME.AddCurrCost(builder, currCost);
         var offset = SC_ENTER_GAME.EndSC_ENTER_GAME(builder);
         builder.Finish(offset.Value);
         var bodyArr = builder.SizedByteArray();
@@ -44,7 +45,7 @@ public static class PacketUtil
         var builder = new FlatBufferBuilder(1024);
 
         var vecOffset = Vec2.CreateVec2(builder, pos.X, pos.Y);
-        var statOffset = UnitStat.CreateUnitStat(builder, stat.Attack, stat.MaxHp, stat.CurrHp, stat.Speed, stat.Cost, stat.Range);
+        var statOffset = UnitStat.CreateUnitStat(builder, stat.Attack, stat.MaxHp, stat.CurrHp, stat.Speed, stat.Cost, stat.AttackRange, stat.Sight);
 
         SC_UNIT_SPAWN.StartSC_UNIT_SPAWN(builder);
         SC_UNIT_SPAWN.AddUnitId(builder, unitId);
@@ -125,6 +126,25 @@ public static class PacketUtil
         var stream = new byte[bodyArr.Length + 4];
         Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
         Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_REMOVE_UNIT), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
+
+    public static byte[] SC_PLAYER_COST_UPDATE_PACKET(long roomId, int cost)
+    {
+        var builder = new FlatBufferBuilder(1024);
+        
+        SC_PLAYER_COST_UPDATE.StartSC_PLAYER_COST_UPDATE(builder);
+        SC_PLAYER_COST_UPDATE.AddRoomId(builder, roomId);
+        SC_PLAYER_COST_UPDATE.AddRemainCost(builder, cost);
+        
+        var offset =  SC_PLAYER_COST_UPDATE.EndSC_PLAYER_COST_UPDATE(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+        
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_PLAYER_COST_UPDATE), 0, stream, 2, 2);
         Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
         return stream;
     }

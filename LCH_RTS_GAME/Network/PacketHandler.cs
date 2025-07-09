@@ -1,9 +1,8 @@
 using Google.FlatBuffers;
-using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
 using LCH_RTS.Contents.Units;
 
-namespace LCH_RTS;
+namespace LCH_RTS.Network;
 
 public abstract class PacketHandler
 {
@@ -49,7 +48,14 @@ public abstract class PacketHandler
             return;
         }
         
+        var playerCost = room.GetPlayerCost(playerSide);
+        if (playerCost < unitStat.Cost) 
+            return;
+
         room.AddUnit(unitId, playerSide, packet.CreatePos.Value, unitStat, packet.UnitType); 
-        session.Send(PacketUtil.SC_UNIT_SPAWN_PACKET(unitId, playerSide, packet.UnitType, packet.CreatePos.Value, unitStat));
+        room.Broadcast(PacketUtil.SC_UNIT_SPAWN_PACKET(unitId, playerSide, packet.UnitType, packet.CreatePos.Value, unitStat));
+        
+        var remainCost = room.DecreaseCost(playerSide, unitStat.Cost);
+        session.Send(PacketUtil.SC_PLAYER_COST_UPDATE_PACKET(room.RoomId, remainCost));
     }
 }

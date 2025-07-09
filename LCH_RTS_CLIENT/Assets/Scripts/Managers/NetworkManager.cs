@@ -15,13 +15,13 @@ public class NetworkManager
     {
         _session = session;
 
-        EditorApplication.playModeStateChanged += (state) =>
-        {
-            if (state == PlayModeStateChange.ExitingEditMode)
-            {
-                _session.Disconnect();
-            }
-        };
+        //EditorApplication.playModeStateChanged += (state) =>
+        //{
+        //    if (state == PlayModeStateChange.ExitingEditMode)
+        //    {
+        //        _session.Disconnect();
+        //    }
+        //};
     }
 
     public void Disconnect()

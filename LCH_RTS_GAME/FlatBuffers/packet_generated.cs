@@ -21,7 +21,8 @@ public enum PACKET_ID : ushort
   SC_REMOVE_UNIT = 11,
   SC_END_GAME = 12,
   SC_ENTER_LOBBY = 13,
-  PACKET_MAX = 14,
+  SC_PLAYER_COST_UPDATE = 14,
+  PACKET_MAX = 15,
 };
 
 public struct Vec2 : IFlatbufferObject
@@ -81,32 +82,36 @@ public struct UnitStat : IFlatbufferObject
   public int CurrHp { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
   public float Speed { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
   public int Cost { get { int o = __p.__offset(12); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
-  public float Range { get { int o = __p.__offset(14); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public float AttackRange { get { int o = __p.__offset(14); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public float Sight { get { int o = __p.__offset(16); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
 
   public static Offset<UnitStat> CreateUnitStat(FlatBufferBuilder builder,
       int attack = 0,
-      int MaxHp = 0,
-      int CurrHp = 0,
+      int maxHp = 0,
+      int currHp = 0,
       float speed = 0.0f,
       int cost = 0,
-      float range = 0.0f) {
-    builder.StartTable(6);
-    UnitStat.AddRange(builder, range);
+      float attack_range = 0.0f,
+      float sight = 0.0f) {
+    builder.StartTable(7);
+    UnitStat.AddSight(builder, sight);
+    UnitStat.AddAttackRange(builder, attack_range);
     UnitStat.AddCost(builder, cost);
     UnitStat.AddSpeed(builder, speed);
-    UnitStat.AddCurrHp(builder, CurrHp);
-    UnitStat.AddMaxHp(builder, MaxHp);
+    UnitStat.AddCurrHp(builder, currHp);
+    UnitStat.AddMaxHp(builder, maxHp);
     UnitStat.AddAttack(builder, attack);
     return UnitStat.EndUnitStat(builder);
   }
 
-  public static void StartUnitStat(FlatBufferBuilder builder) { builder.StartTable(6); }
+  public static void StartUnitStat(FlatBufferBuilder builder) { builder.StartTable(7); }
   public static void AddAttack(FlatBufferBuilder builder, int attack) { builder.AddInt(0, attack, 0); }
   public static void AddMaxHp(FlatBufferBuilder builder, int maxHp) { builder.AddInt(1, maxHp, 0); }
   public static void AddCurrHp(FlatBufferBuilder builder, int currHp) { builder.AddInt(2, currHp, 0); }
   public static void AddSpeed(FlatBufferBuilder builder, float speed) { builder.AddFloat(3, speed, 0.0f); }
   public static void AddCost(FlatBufferBuilder builder, int cost) { builder.AddInt(4, cost, 0); }
-  public static void AddRange(FlatBufferBuilder builder, float range) { builder.AddFloat(5, range, 0.0f); }
+  public static void AddAttackRange(FlatBufferBuilder builder, float attackRange) { builder.AddFloat(5, attackRange, 0.0f); }
+  public static void AddSight(FlatBufferBuilder builder, float sight) { builder.AddFloat(6, sight, 0.0f); }
   public static Offset<UnitStat> EndUnitStat(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<UnitStat>(o);
@@ -124,7 +129,8 @@ static public class UnitStatVerify
       && verifier.VerifyField(tablePos, 8 /*CurrHp*/, 4 /*int*/, 4, false)
       && verifier.VerifyField(tablePos, 10 /*Speed*/, 4 /*float*/, 4, false)
       && verifier.VerifyField(tablePos, 12 /*Cost*/, 4 /*int*/, 4, false)
-      && verifier.VerifyField(tablePos, 14 /*Range*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 14 /*AttackRange*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 16 /*Sight*/, 4 /*float*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -323,22 +329,26 @@ public struct SC_ENTER_GAME : IFlatbufferObject
   public long RoomId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
   public long BluePlayerId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
   public long RedPlayerId { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public int CurrCost { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
 
   public static Offset<SC_ENTER_GAME> CreateSC_ENTER_GAME(FlatBufferBuilder builder,
       long room_id = 0,
       long blue_player_id = 0,
-      long red_player_id = 0) {
-    builder.StartTable(3);
+      long red_player_id = 0,
+      int curr_cost = 0) {
+    builder.StartTable(4);
     SC_ENTER_GAME.AddRedPlayerId(builder, red_player_id);
     SC_ENTER_GAME.AddBluePlayerId(builder, blue_player_id);
     SC_ENTER_GAME.AddRoomId(builder, room_id);
+    SC_ENTER_GAME.AddCurrCost(builder, curr_cost);
     return SC_ENTER_GAME.EndSC_ENTER_GAME(builder);
   }
 
-  public static void StartSC_ENTER_GAME(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void StartSC_ENTER_GAME(FlatBufferBuilder builder) { builder.StartTable(4); }
   public static void AddRoomId(FlatBufferBuilder builder, long roomId) { builder.AddLong(0, roomId, 0); }
   public static void AddBluePlayerId(FlatBufferBuilder builder, long bluePlayerId) { builder.AddLong(1, bluePlayerId, 0); }
   public static void AddRedPlayerId(FlatBufferBuilder builder, long redPlayerId) { builder.AddLong(2, redPlayerId, 0); }
+  public static void AddCurrCost(FlatBufferBuilder builder, int currCost) { builder.AddInt(3, currCost, 0); }
   public static Offset<SC_ENTER_GAME> EndSC_ENTER_GAME(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<SC_ENTER_GAME>(o);
@@ -354,6 +364,7 @@ static public class SC_ENTER_GAMEVerify
       && verifier.VerifyField(tablePos, 4 /*RoomId*/, 8 /*long*/, 8, false)
       && verifier.VerifyField(tablePos, 6 /*BluePlayerId*/, 8 /*long*/, 8, false)
       && verifier.VerifyField(tablePos, 8 /*RedPlayerId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 10 /*CurrCost*/, 4 /*int*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -604,6 +615,48 @@ static public class SC_REMOVE_UNITVerify
     return verifier.VerifyTableStart(tablePos)
       && verifier.VerifyField(tablePos, 4 /*RoomId*/, 8 /*long*/, 8, false)
       && verifier.VerifyField(tablePos, 6 /*UnitId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct SC_PLAYER_COST_UPDATE : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static SC_PLAYER_COST_UPDATE GetRootAsSC_PLAYER_COST_UPDATE(ByteBuffer _bb) { return GetRootAsSC_PLAYER_COST_UPDATE(_bb, new SC_PLAYER_COST_UPDATE()); }
+  public static SC_PLAYER_COST_UPDATE GetRootAsSC_PLAYER_COST_UPDATE(ByteBuffer _bb, SC_PLAYER_COST_UPDATE obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public SC_PLAYER_COST_UPDATE __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public long RoomId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public int RemainCost { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
+
+  public static Offset<SC_PLAYER_COST_UPDATE> CreateSC_PLAYER_COST_UPDATE(FlatBufferBuilder builder,
+      long room_id = 0,
+      int remain_cost = 0) {
+    builder.StartTable(2);
+    SC_PLAYER_COST_UPDATE.AddRoomId(builder, room_id);
+    SC_PLAYER_COST_UPDATE.AddRemainCost(builder, remain_cost);
+    return SC_PLAYER_COST_UPDATE.EndSC_PLAYER_COST_UPDATE(builder);
+  }
+
+  public static void StartSC_PLAYER_COST_UPDATE(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void AddRoomId(FlatBufferBuilder builder, long roomId) { builder.AddLong(0, roomId, 0); }
+  public static void AddRemainCost(FlatBufferBuilder builder, int remainCost) { builder.AddInt(1, remainCost, 0); }
+  public static Offset<SC_PLAYER_COST_UPDATE> EndSC_PLAYER_COST_UPDATE(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<SC_PLAYER_COST_UPDATE>(o);
+  }
+}
+
+
+static public class SC_PLAYER_COST_UPDATEVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*RoomId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*RemainCost*/, 4 /*int*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

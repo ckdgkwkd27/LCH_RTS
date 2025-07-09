@@ -26,9 +26,4 @@ public class ServerSession : PacketSession
     public override void FlushSend()
     {
     }
-    
-    //public void Send(PACKET_ID id, IFlatbufferObject packet)
-    //{
-    //   //#TODO 
-    //}
 }

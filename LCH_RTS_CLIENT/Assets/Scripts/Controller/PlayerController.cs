@@ -30,20 +30,20 @@ public class PlayerController : MonoBehaviour
         MaxCost = maxCost;
     }
 
-    public void SetPlayerSide(EPlayerSide playerSide)
-    {
-        PlayerSide = playerSide;
-    }
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        Managers.UI.ShowPlayUI().UpdatePlayerColor(PlayerSide);
     }
 
     // Update is called once per frame
     void Update()
     {
+    }
 
+    public void SetCost(int currCost)
+    {
+        CurrCost = currCost;
+        Managers.UI.ShowPlayUI().UpdateCostText(CurrCost, MaxCost);
     }
 }

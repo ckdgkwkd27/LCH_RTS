@@ -1,5 +1,6 @@
 using Google.FlatBuffers;
 using LCH_RTS_CORE_LIB.Network;
+using LCH_RTS.Network;
 
 namespace LCH_RTS;
 

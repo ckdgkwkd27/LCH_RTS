@@ -8,7 +8,8 @@ public class BaseStat
     public int CurrHp;
     public float speed;
     public int cost;
-    public float range;
+    public float attackRange;
+    public float sight;
 
     public static BaseStat ConvertFrom(UnitStat stat)
     {
@@ -18,7 +19,8 @@ public class BaseStat
         bs.CurrHp = stat.CurrHp;
         bs.speed = stat.Speed;
         bs.cost = stat.Cost;
-        bs.range = stat.Range;
+        bs.attackRange = stat.AttackRange;
+        bs.sight = stat.Sight;
         return bs;
     }
 }
@@ -61,9 +63,16 @@ public class UnitBaseController : MonoBehaviour
         
     }
 
+    public virtual void OnAttack(UnitBaseController ub)
+    {
+
+    }
+
     public void OnTakeDamage(int remainHp)
     {
         Stat.CurrHp = remainHp;
         HealthBar.value = (float)Stat.CurrHp / Stat.MaxHp;
     }
+
+    public virtual void OnRemove() { }
 }
