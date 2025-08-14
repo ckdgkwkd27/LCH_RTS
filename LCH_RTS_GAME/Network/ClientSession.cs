@@ -2,11 +2,17 @@ using System.Net;
 using Google.FlatBuffers;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
+using LCH_RTS.Network;
 
 namespace LCH_RTS;
 
 public class ClientSession : PacketSession
 {
+    public ClientSession()
+    {
+        sessionCategory = EPacketSessionCategory.ClientSession;
+    }
+    
     private readonly Lock _lock = new();
     
     //Packet 모아보내기
@@ -16,6 +22,7 @@ public class ClientSession : PacketSession
     
     public override void OnConnected(EndPoint endPoint)
     { 
+        GameServerSessionManager.AddSession(this);
         Console.WriteLine($"OnConnected : {endPoint}");
 
         var player = PlayerManager.Instance.AddPlayer(this);
@@ -23,15 +30,20 @@ public class ClientSession : PacketSession
         if(room is null) return;
         Send(PacketUtil.SC_LOGIN_PACKET(player.PlayerId));
         
-        room.AddPlayer(player);
-        Send(PacketUtil.SC_ENTER_GAME_PACKET(1, room.GetPlayerId(EPlayerSide.Blue), room.GetPlayerId(EPlayerSide.Red), 0));
+        var deck = new PlayerDeck();
+        deck.MakeTestDeck();
+
+        var hands = deck.ShuffleAndTake(PlayerDeck.MAX_CARD_LIST);
+        var playerSide = room.AddPlayer(player, deck, hands);
+
+        Send(PacketUtil.SC_ENTER_GAME_PACKET(1, room.GetPlayerId(playerSide), (byte)playerSide, 0, CardUtil.ConvertToCardInfos(hands).ToArray()));
         
         room.GameReady();
     }
     
     public override void OnDisconnected(EndPoint endPoint)
     {
-        SessionManager.ReturnToPool(this);
+        GameServerSessionManager.RemoveSession(this);
         Console.WriteLine($"OnDisconnected : {endPoint}");
     }
 

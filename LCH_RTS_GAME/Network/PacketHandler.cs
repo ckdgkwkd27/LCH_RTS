@@ -1,4 +1,5 @@
 using Google.FlatBuffers;
+using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
 using LCH_RTS.Contents.Units;
 
@@ -6,13 +7,13 @@ namespace LCH_RTS.Network;
 
 public abstract class PacketHandler
 {
-    public static void CS_GREET_Handler(ClientSession session, ArraySegment<byte> buffer)
+    public static void CS_GREET_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = CS_GREET.GetRootAsCS_GREET(new ByteBuffer(buffer.Array, buffer.Offset));
         Console.WriteLine($"CS_GREET : {packet.Data}");
     }
 
-    public static void CS_UNIT_SPAWN_Handler(ClientSession session, ArraySegment<byte> buffer)
+    public static void CS_UNIT_SPAWN_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = CS_UNIT_SPAWN.GetRootAsCS_UNIT_SPAWN(new ByteBuffer(buffer.Array, buffer.Offset));
         var room = GameRoomManager.Instance.GetRoom(packet.RoomId);
@@ -29,9 +30,22 @@ public abstract class PacketHandler
             session.Disconnect();
             return;
         }
+
+        if (!UnitUtil.IsValidSpawnSpace(packet.CreatePos.Value))
+        {
+            Console.WriteLine($"[Warning] Pos is Not Valid=({packet.CreatePos.Value.X},{packet.CreatePos.Value.Y})");
+            return;
+        }
+
+        if (room.GetRoomState() != ERoomState.Start)
+        {
+            Console.WriteLine($"[ERROR] Not Able RoomState");
+            session.Disconnect();
+            return;
+        }
         
         var unitId = room.IssueUnitId();
-        var player = PlayerManager.Instance.GetPlayer(session);
+        var player = PlayerManager.Instance.GetPlayer((session as ClientSession)!);
         if (player is null)
         {
             Console.WriteLine($"[ERROR] Not Exist Player");
@@ -50,12 +64,38 @@ public abstract class PacketHandler
         
         var playerCost = room.GetPlayerCost(playerSide);
         if (playerCost < unitStat.Cost) 
+        {
+            Console.WriteLine($"[WARNING] Player {player.PlayerId} insufficient cost. Required: {unitStat.Cost}, Current: {playerCost}");
             return;
+        }
+        
+        if (!room.HasCardInHand(playerSide, packet.UnitType))
+        {
+            Console.WriteLine($"[WARNING] Player {player.PlayerId} does not have card with UnitType {packet.UnitType}");
+            return;
+        }
 
         room.AddUnit(unitId, playerSide, packet.CreatePos.Value, unitStat, packet.UnitType); 
         room.Broadcast(PacketUtil.SC_UNIT_SPAWN_PACKET(unitId, playerSide, packet.UnitType, packet.CreatePos.Value, unitStat));
         
         var remainCost = room.DecreaseCost(playerSide, unitStat.Cost);
         session.Send(PacketUtil.SC_PLAYER_COST_UPDATE_PACKET(room.RoomId, remainCost));
+
+        room.HandsUpdate(playerSide, player.PlayerId, packet.UnitType);
+    }
+
+    public static void MG_GAME_READY_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = MG_GAME_READY.GetRootAsMG_GAME_READY(new ByteBuffer(buffer.Array, buffer.Offset));
+        var matchId = packet.MatchId;
+        var room = GameRoomManager.Instance.GetRoom(matchId);
+        if (room is null)
+        {
+            Console.WriteLine($"[MG_GAME_READY] Find Room Failed");
+            return;
+        }
+
+        room.AddPlayers(packet.PlayerId1, packet.PlayerId2);
+        Console.WriteLine($"[MG_GAME_READY] GameRoom {matchId} created for match {matchId} with players: {packet.PlayerId1}, {packet.PlayerId2}");
     }
 }

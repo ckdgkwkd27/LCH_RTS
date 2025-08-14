@@ -5,16 +5,16 @@ namespace LCH_RTS_CORE_LIB.Network;
 
 public class Connector
 {
-    private Session _session;
+    private Func<PacketSession> _sessionFactory;
     
-    public void Connect(IPEndPoint endPoint, Session session, int count = 1)
+    public void Connect(IPEndPoint endPoint, Func<PacketSession> sessionFactory, int count = 1)
     {
-        _session = session;
         for (var i = 0; i < count; i++)
         {
             var socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-            SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+            _sessionFactory += sessionFactory;
+            
+            var args = new SocketAsyncEventArgs();
             args.Completed += OnConnectCompleted;
             args.RemoteEndPoint = endPoint;
             args.UserToken = socket;
@@ -25,16 +25,15 @@ public class Connector
         }
     }
 
-    void RegisterConnect(SocketAsyncEventArgs args)
+    private void RegisterConnect(SocketAsyncEventArgs args)
     {
-        Socket socket = args.UserToken as Socket;
-        if (socket == null)
+        if (args.UserToken is not Socket socket)
             return;
 
         try
         {
-            bool pending = socket.ConnectAsync(args);
-            if (pending == false)
+            var pending = socket.ConnectAsync(args);
+            if (!pending)
                 OnConnectCompleted(null, args);
         }
         catch (Exception e)
@@ -47,9 +46,14 @@ public class Connector
     {
         try
         {
+            if (args.ConnectSocket is null || args.RemoteEndPoint is null)
+            {
+                throw new Exception();
+            }
+            
             if (args.SocketError == SocketError.Success)
             {
-                var session = SessionManager.AcquireFromPool();
+                var session = _sessionFactory.Invoke();
                 session.Start(args.ConnectSocket);
                 session.OnConnected(args.RemoteEndPoint);
             }

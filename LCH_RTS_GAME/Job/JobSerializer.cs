@@ -36,7 +36,7 @@ public class JobSerializer
 
         while (true)
         {
-            IJob? job = Pop();
+            var job = Pop();
             if (job == null)
                 return;
 

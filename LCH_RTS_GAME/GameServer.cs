@@ -1,15 +1,18 @@
-﻿using System.Net;
+using System.Net;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
-using LCH_RTS;
 using LCH_RTS.Contents;
+using LCH_RTS.Network;
 
-internal class Program
+namespace LCH_RTS;
+
+internal abstract class Program
 {
     private static void NetworkThread()
     {
         while (true)
         {
-            SessionManager.ForEach((session) => session.FlushSend());
+            GameServerSessionManager.ForEach((session) => session.FlushSend());
             Thread.Sleep(0);
         }
     }
@@ -29,14 +32,10 @@ internal class Program
         var ipHost = Dns.GetHostEntry(host);
         var ipAddr = ipHost.AddressList[0];
 
-        const int port = 8888;  
-        var endPoint = new IPEndPoint(ipAddr, port);
-
-        SessionManager.PrepareSessions(100, () => new ClientSession());
-        var clientSession = SessionManager.AcquireFromPool() as ClientSession ?? throw new Exception();
+        var endPoint = new IPEndPoint(ipAddr, NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT));
 
         var acceptor = new Acceptor();
-        acceptor.Init(endPoint, 100, 100, clientSession);
+        acceptor.Init(endPoint, () => new ClientSession(), 100, 100);
         
         GameRoomManager.Instance.Init(10);
 
@@ -58,6 +57,23 @@ internal class Program
             t. Start();
         }
         
-        Console.WriteLine("Server is running...");
+        Console.WriteLine("GameServer is running...");
+
+        try
+        {
+            var matchingHost = Dns.GetHostName();
+            var matchingIpHost = Dns.GetHostEntry(matchingHost);
+            var matchingIpAddr = matchingIpHost.AddressList[0];
+            const int matchingPort = 8002;
+            var matchingEndPoint = new IPEndPoint(matchingIpAddr, matchingPort);
+
+            var connector = new Connector();
+            connector.Connect(matchingEndPoint, () => new MatchingSession(), 1);
+            Console.WriteLine($"Connecting to Matching Server at {matchingEndPoint}...");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Failed to connect to Matching Server: {ex.Message}");
+        }
     }
 }

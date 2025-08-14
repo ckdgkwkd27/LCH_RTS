@@ -1,4 +1,7 @@
 using Google.FlatBuffers;
+using System;
+using System.Collections.Generic;
+using System.Xml.Linq;
 using UnityEngine;
 
 public class Util
@@ -64,6 +67,12 @@ public class Util
              case 3:
                 name = "KingTower";
                 break;
+            case 4:
+                name = "Sphere";
+                break;
+            case 5:
+                name = "Cylinder";
+                break;
             default:
                 break;
         }
@@ -85,6 +94,23 @@ public class Util
         var statOffset = UnitStat.CreateUnitStat(builder, attack, maxHp, currHp, speed, cost);
         builder.Finish(statOffset.Value);
         return UnitStat.GetRootAsUnitStat(builder.DataBuffer);
+    }
+
+    public static List<Card> ConvertCardInfosToCards(Func<int, CardInfo?> hands, int handsLength)
+    {
+        List<Card> handsList = new List<Card>();
+        for (int i = 0; i < handsLength; i++)
+        {
+            var flatCardInfo = hands(i).Value;
+            Card card = new Card()
+            {
+                unitType = flatCardInfo.UnitType,
+                cost = flatCardInfo.Cost,
+                name = flatCardInfo.Name
+            };
+            handsList.Add(card);
+        }
+        return handsList;
     }
 }
 

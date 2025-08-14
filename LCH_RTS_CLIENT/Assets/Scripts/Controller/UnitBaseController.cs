@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -43,6 +45,13 @@ public class UnitBaseController : MonoBehaviour
     [SerializeField]
     private Vector3 canvasScale;
 
+    [SerializeField]
+    private float _shootDelay = 1.0f;
+
+    [SerializeField]
+    private GameObject _bullet;
+    List<GameObject> _bullets = new List<GameObject>();
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected virtual void Start()
     {
@@ -63,16 +72,34 @@ public class UnitBaseController : MonoBehaviour
         
     }
 
-    public virtual void OnAttack(UnitBaseController ub)
-    {
-
-    }
-
     public void OnTakeDamage(int remainHp)
     {
         Stat.CurrHp = remainHp;
         HealthBar.value = (float)Stat.CurrHp / Stat.MaxHp;
     }
 
-    public virtual void OnRemove() { }
+    public void OnAttack(UnitBaseController ub)
+    {
+        StartCoroutine(shoot(ub));
+    }
+
+    IEnumerator shoot(UnitBaseController target)
+    {
+        yield return new WaitForSeconds(_shootDelay);
+
+        {
+            GameObject bullet = Instantiate(_bullet, transform.position, Quaternion.identity);
+            _bullets.Add(bullet);
+            bullet.GetComponent<BulletController>()._target = target;
+            bullet.GetComponent<BulletController>()._attacker = this;
+        }
+    }
+
+    public void OnRemove()
+    {
+        foreach (var bullet in _bullets)
+        {
+            Destroy(bullet);
+        }
+    }
 }

@@ -1,9 +1,9 @@
-using UnityEngine.EventSystems;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameRoomScene : MonoBehaviour
 {
-    public void Init(long roomId, long playerId, EPlayerSide playerSide, int currCost, int maxCost)
+    public void Init(long roomId, long playerId, EPlayerSide playerSide, int currCost, int maxCost, List<Card> playerHands, ServerSession session)
     {
         Managers.Object.Clear();
 
@@ -12,6 +12,7 @@ public class GameRoomScene : MonoBehaviour
         go.AddComponent<PlayerController>();
 
         var playerController = go.GetComponent<PlayerController>();
-        playerController.Init(playerId, roomId, playerSide, currCost, maxCost);
+        playerController.Init(playerId, roomId, playerSide, currCost, maxCost, playerHands);
+        session.PlayerController = playerController;
     }
 }

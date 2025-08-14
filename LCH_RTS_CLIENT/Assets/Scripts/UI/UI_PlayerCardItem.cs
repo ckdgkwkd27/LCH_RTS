@@ -48,8 +48,23 @@ public class UI_PlayerCardItem : MonoBehaviour, IPointerEnterHandler, IPointerEx
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100f))
         {
+            var playerGo = GameObject.Find("player");
+            if (playerGo == null)
+            {
+                Debug.LogError("OnDrag Owner Player Is NULL");
+                return;
+            }
+
+            var pc = playerGo.GetComponent<PlayerController>();
+            if (pc == null)
+            {
+                Debug.LogError("OnDrag Owner PC Is NULL");
+                return;
+            }
+
             Vector3 worldPos = hit.point;
-            Managers.Network.Send(PacketUtil.CS_UNIT_SPAWN_PACKET(PlayerInfo.Instance.RoomId, cardInfo.unitType, new Vector2(worldPos.x, worldPos.y)));
+            Managers.Network.Send(PacketUtil.CS_UNIT_SPAWN_Packet(pc.RoomId, cardInfo.unitType, worldPos));
+            Debug.Log($"EndDrag=>UnitType={cardInfo.unitType}");
         }
     }
 }

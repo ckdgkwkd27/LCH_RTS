@@ -21,14 +21,26 @@ public static class PacketUtil
         return stream;
     }
     
-    public static byte[] SC_ENTER_GAME_PACKET(long roomId, long bluePlayerId, long redPlayerId, int currCost)
+    public static byte[] SC_ENTER_GAME_PACKET(long roomId, long playerId, byte playerSide, int currCost, CardInfo[] cardInfos)
     {
         var builder = new FlatBufferBuilder(1024);
+
+        var cardInfoOffsets = new Offset<CardInfo>[cardInfos.Length];
+        for(var idx = 0; idx < cardInfos.Length; idx++)
+        {
+            var cardInfo = cardInfos[idx];
+            var cardNameOffset = builder.CreateString(cardInfo.Name);
+            cardInfoOffsets[idx] = CardInfo.CreateCardInfo(builder, cardInfo.UnitType, cardInfo.Cost, cardNameOffset);
+        }
+
+        var playerHandOffset = SC_ENTER_GAME.CreatePlayerHandsVector(builder, cardInfoOffsets);
+        
         SC_ENTER_GAME.StartSC_ENTER_GAME(builder);
         SC_ENTER_GAME.AddRoomId(builder, roomId);
-        SC_ENTER_GAME.AddBluePlayerId(builder, bluePlayerId);
-        SC_ENTER_GAME.AddRedPlayerId(builder, redPlayerId);
+        SC_ENTER_GAME.AddPlayerId(builder, playerId);
+        SC_ENTER_GAME.AddPlayerSide(builder, playerSide);
         SC_ENTER_GAME.AddCurrCost(builder, currCost);
+        SC_ENTER_GAME.AddPlayerHands(builder, playerHandOffset);
         var offset = SC_ENTER_GAME.EndSC_ENTER_GAME(builder);
         builder.Finish(offset.Value);
         var bodyArr = builder.SizedByteArray();
@@ -113,7 +125,7 @@ public static class PacketUtil
 
     public static byte[] SC_REMOVE_UNIT_PACKET(long roomId, long unitId)
     {
-        var builder = new  FlatBufferBuilder(1024);
+        var builder = new FlatBufferBuilder(1024);
 
         SC_REMOVE_UNIT.StartSC_REMOVE_UNIT(builder);
         SC_REMOVE_UNIT.AddRoomId(builder, roomId);
@@ -126,6 +138,26 @@ public static class PacketUtil
         var stream = new byte[bodyArr.Length + 4];
         Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
         Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_REMOVE_UNIT), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
+
+    public static byte[] SC_END_GAME_PACKET(long roomId, sbyte winnerPlayerSide, sbyte loserPlayerSide)
+    {
+        var builder = new FlatBufferBuilder(1024);
+
+        SC_END_GAME.StartSC_END_GAME(builder);
+        SC_END_GAME.AddRoomId(builder, roomId);
+        SC_END_GAME.AddWinnerPlayerSide(builder, winnerPlayerSide);
+        SC_END_GAME.AddLoserPlayerSide(builder, loserPlayerSide);
+
+        var offset = SC_END_GAME.EndSC_END_GAME(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_END_GAME), 0, stream, 2, 2);
         Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
         return stream;
     }
@@ -145,6 +177,30 @@ public static class PacketUtil
         var stream = new byte[bodyArr.Length + 4];
         Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
         Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_PLAYER_COST_UPDATE), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
+
+    public static byte[] SC_PLAYER_HAND_UPDATE_PACKET(long roomId, long playerId, List<CardInfo> playerHands)
+    {
+        var builder = new FlatBufferBuilder(1024);
+
+        List<Offset<CardInfo>> tempHands = [];
+        tempHands.AddRange(from cardInfo in playerHands let cardName = builder.CreateString(cardInfo.Name) select CardInfo.CreateCardInfo(builder, cardInfo.UnitType, cardInfo.Cost, cardName));
+        var cards = SC_PLAYER_HAND_UPDATE.CreatePlayerHandsVector(builder, tempHands.ToArray());
+
+        SC_PLAYER_HAND_UPDATE.StartSC_PLAYER_HAND_UPDATE(builder);
+        SC_PLAYER_HAND_UPDATE.AddRoomId(builder, roomId);
+        SC_PLAYER_HAND_UPDATE.AddPlayerId(builder, playerId);
+        SC_PLAYER_HAND_UPDATE.AddPlayerHands(builder, cards);
+
+        var offset = SC_PLAYER_HAND_UPDATE.EndSC_PLAYER_HAND_UPDATE(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_PLAYER_HAND_UPDATE), 0, stream, 2, 2);
         Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
         return stream;
     }

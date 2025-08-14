@@ -23,7 +23,9 @@ public class PacketProcessor
         _handler.Add(PACKET_ID.SC_UNIT_MOVE,                PacketHandler.SC_UNIT_MOVE_Handler);
         _handler.Add(PACKET_ID.SC_UNIT_ATTACK,              PacketHandler.SC_UNIT_ATTACK_Handler);
         _handler.Add(PACKET_ID.SC_REMOVE_UNIT,              PacketHandler.SC_REMOVE_UNIT_Handler);
+        _handler.Add(PACKET_ID.SC_END_GAME,                 PacketHandler.SC_END_GAME_Handler);  
         _handler.Add(PACKET_ID.SC_PLAYER_COST_UPDATE,       PacketHandler.SC_PLAYER_COST_UPDATE_Handler);
+        _handler.Add(PACKET_ID.SC_PLAYER_HAND_UPDATE,       PacketHandler.SC_PLAYER_HAND_UPDATE_Handler);
 
         _deserializer.Add(PACKET_ID.SC_LOGIN,               MakePacket<SC_LOGIN>);
         _deserializer.Add(PACKET_ID.SC_ENTER_GAME,          MakePacket<SC_ENTER_GAME>);
@@ -31,7 +33,9 @@ public class PacketProcessor
         _deserializer.Add(PACKET_ID.SC_UNIT_MOVE,           MakePacket<SC_UNIT_MOVE>);
         _deserializer.Add(PACKET_ID.SC_UNIT_ATTACK,         MakePacket<SC_UNIT_ATTACK>);
         _deserializer.Add(PACKET_ID.SC_REMOVE_UNIT,         MakePacket<SC_REMOVE_UNIT>);
+        _deserializer.Add(PACKET_ID.SC_END_GAME,            MakePacket<SC_END_GAME>);
         _deserializer.Add(PACKET_ID.SC_PLAYER_COST_UPDATE,  MakePacket<SC_PLAYER_COST_UPDATE>);
+        _deserializer.Add(PACKET_ID.SC_PLAYER_HAND_UPDATE,  MakePacket<SC_PLAYER_HAND_UPDATE>);
     }
 
     public void OnRecvPacket(PacketSession session, ArraySegment<byte> buffer)

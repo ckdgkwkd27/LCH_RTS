@@ -51,6 +51,18 @@ public class Unit : UnitBase
             }
         }
 
+        // 팀별로 적절한 waypoint만 선택하도록 필터링
+        if (PlayerSide == EPlayerSide.Blue)
+        {
+            // Blue 팀: Y < 10f인 waypoint만 선택 (Red 타워들)
+            candidates = candidates.Where(wp => wp.Pos.Y < 10f).ToList();
+        }
+        else
+        {
+            // Red 팀: Y > 20f인 waypoint만 선택 (Blue 타워들)
+            candidates = candidates.Where(wp => wp.Pos.Y > 20f).ToList();
+        }
+
         var filtered = PlayerSide == EPlayerSide.Blue ? candidates.Where(wp => wp.Pos.Y < Pos.Y).ToList() : candidates.Where(wp => wp.Pos.Y > Pos.Y).ToList();
         if (filtered.Count == 0)
         {

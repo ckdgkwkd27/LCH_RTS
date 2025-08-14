@@ -85,11 +85,18 @@ public class Tower : UnitBase
 
     protected override void OnDead(long roomId, EPlayerSide winnerSide, EPlayerSide loserSide)
     {
-        if (TowerType == ETowerType.King)
+        if (TowerType != ETowerType.King) 
+            return;
+        
+        var gameRoom = GameRoomManager.Instance.GetRoom(roomId);
+        if (gameRoom == null)
         {
-            //#TODO: Room에 GameEnd Notify;
-            
-            Console.WriteLine($"Game Finish.Winner={winnerSide},Loser={loserSide}");
+            Console.WriteLine($"Error: Cannot Find Room (Tower::OnDead)");
+            return;
         }
+
+        gameRoom.SetRoomState(ERoomState.End);
+        gameRoom.Broadcast(PacketUtil.SC_END_GAME_PACKET(gameRoom.RoomId, (sbyte)winnerSide, (sbyte)loserSide));
+        Console.WriteLine($"Game Finish.Winner={winnerSide},Loser={loserSide}");
     }
 }

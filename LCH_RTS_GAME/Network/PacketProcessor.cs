@@ -13,19 +13,27 @@ public class PacketProcessor
         Register();
     }
 
-    private readonly Dictionary<PACKET_ID, Action<ClientSession, ArraySegment<byte>, PACKET_ID>> _deserializer = new();
-    private readonly Dictionary<PACKET_ID, Action<ClientSession, ArraySegment<byte>>> _handler = new();
+    private readonly Dictionary<PACKET_ID, Action<PacketSession, ArraySegment<byte>, PACKET_ID>> _deserializer = new();
+    private readonly Dictionary<PACKET_ID, Action<PacketSession, ArraySegment<byte>>> _handler = new();
 
     private void Register()
     {
-        _handler.Add(PACKET_ID.CS_GREET, PacketHandler.CS_GREET_Handler);
-        _handler.Add(PACKET_ID.CS_UNIT_SPAWN, PacketHandler.CS_UNIT_SPAWN_Handler);
-        
-        _deserializer.Add(PACKET_ID.CS_GREET, MakePacket<CS_GREET>);
-        _deserializer.Add(PACKET_ID.CS_UNIT_SPAWN, MakePacket<CS_UNIT_SPAWN>);
+        {
+            _handler.Add(PACKET_ID.CS_GREET, PacketHandler.CS_GREET_Handler);
+            _handler.Add(PACKET_ID.CS_UNIT_SPAWN, PacketHandler.CS_UNIT_SPAWN_Handler);
+
+            _handler.Add(PACKET_ID.MG_GAME_READY, PacketHandler.MG_GAME_READY_Handler);
+        }
+
+        {
+            _deserializer.Add(PACKET_ID.CS_GREET, MakePacket<CS_GREET>);
+            _deserializer.Add(PACKET_ID.CS_UNIT_SPAWN, MakePacket<CS_UNIT_SPAWN>);
+
+            _deserializer.Add(PACKET_ID.MG_GAME_READY, MakePacket<MG_GAME_READY>);
+        }
     }
 
-    public void OnRecvPacket(ClientSession session, ArraySegment<byte> buffer)
+    public void OnRecvPacket(PacketSession session, ArraySegment<byte> buffer)
     {
         if(buffer.Array is null) return;
         
@@ -46,9 +54,9 @@ public class PacketProcessor
             handler.Invoke(session, bodyBuffer, id);
     }
 
-    private void MakePacket<T>(ClientSession session, ArraySegment<byte> buffer, PACKET_ID id) where T : IFlatbufferObject, new()
+    private void MakePacket<T>(PacketSession session, ArraySegment<byte> buffer, PACKET_ID id) where T : IFlatbufferObject, new()
     {
-        Action<ClientSession, ArraySegment<byte>>? action = null;
+        Action<PacketSession, ArraySegment<byte>>? action = null;
         if (_handler.TryGetValue(id, out action))
             action.Invoke(session, buffer);
     }

@@ -1,10 +1,11 @@
 using Google.FlatBuffers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-//FlatBuffer µ¥ÀÌÅÍ´Â ÁÖ¼Ò°ªÀ» ÂüÁ¶ÇÏ´Â ¹æ½ÄÀÌ±â ¶§¹®¿¡ °ª Å¸ÀÔÀ¸·Î °¡Á®¿Í¾ß ¸ŞÀÎ¾²·¹µå¿¡¼­ ÇØÁ¦·Î ÀÎÇÑ ¹®Á¦°¡ »ı±âÁö ¾Ê´Â´Ù.
+//FlatBuffer ë°ì´í„°ëŠ” ì£¼ì†Œê°’ì„ ì°¸ì¡°í•˜ëŠ” ë°©ì‹ì´ê¸° ë•Œë¬¸ì— ê°’ íƒ€ì…ìœ¼ë¡œ ê°€ì ¸ì™€ì•¼ ë©”ì¸ì“°ë ˆë“œì—ì„œ í•´ì œë¡œ ì¸í•œ ë¬¸ì œê°€ ìƒê¸°ì§€ ì•ŠëŠ”ë‹¤.
 
 public class PacketHandler
 {
@@ -12,30 +13,29 @@ public class PacketHandler
     {
         var packet = SC_LOGIN.GetRootAsSC_LOGIN(new ByteBuffer(buffer.Array, buffer.Offset));
         var playerId = packet.PlayerId;
-        PlayerInfo.Instance.SetPlayerId(playerId);
+        var ss = session as ServerSession;
     }
 
     public static void SC_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer) 
     {
         var packet = SC_ENTER_GAME.GetRootAsSC_ENTER_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
-        Debug.Log($"RoomId={packet.RoomId}, blueId = {packet.BluePlayerId}, redId = {packet.RedPlayerId}, Cost={packet.CurrCost}");
-
         SceneManager.sceneLoaded += OnSceneLoaded;
         tempPacket = packet;
 
+        ss = session as ServerSession;
         SceneManager.LoadScene("PlayScene");
     }
 
     private static SC_ENTER_GAME tempPacket;
+    private static ServerSession ss;
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
 
         if (scene.name == "PlayScene")
         {
-            var playerId = PlayerInfo.Instance.PlayerId; 
-            Debug.Log($"[TEST] PlayerId={playerId}");
-            var playerSide = playerId == tempPacket.BluePlayerId ? EPlayerSide.Blue : EPlayerSide.Red;
+            var playerId = tempPacket.PlayerId;
+            var playerSide = (EPlayerSide)tempPacket.PlayerSide;
 
             var go = GameObject.Find("GameRoomScene");
             if (go != null)
@@ -43,11 +43,12 @@ public class PacketHandler
                 var roomScene = go.GetComponent<GameRoomScene>();
                 if (roomScene != null)
                 {
-                    roomScene.Init(tempPacket.RoomId, playerId, playerSide, tempPacket.CurrCost, 10);
-                    PlayerInfo.Instance.SetRoomId(tempPacket.RoomId);
+                    roomScene.Init(tempPacket.RoomId, playerId, playerSide, tempPacket.CurrCost, 10, 
+                        Util.ConvertCardInfosToCards(tempPacket.PlayerHands, tempPacket.PlayerHandsLength), ss);
                 }
             }
         }
+        ss = null;
     }
 
     public static void SC_UNIT_SPAWN_Handler(PacketSession session, ArraySegment<byte> buffer) 
@@ -133,6 +134,30 @@ public class PacketHandler
         Debug.Log($"Unit={packet.UnitId} remove Success");
     }
 
+    public static void SC_END_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = SC_END_GAME.GetRootAsSC_END_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
+
+        var ss = session as ServerSession;
+        var pc = ss.PlayerController;
+        if (pc == null)
+            return;
+
+        var playerId = pc.PlayerId;
+        var playerSide = pc.PlayerSide;
+
+        if (packet.WinnerPlayerSide == (sbyte)playerSide)
+        {
+            pc.SetResultImage(true);
+            Debug.Log($"VICTORY!");
+        }
+        else
+        {
+            pc.SetResultImage(false);
+            Debug.Log($"Lose!");
+        }
+    }
+
     public static void SC_PLAYER_COST_UPDATE_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = SC_PLAYER_COST_UPDATE.GetRootAsSC_PLAYER_COST_UPDATE(new ByteBuffer(buffer.Array, buffer.Offset));
@@ -151,5 +176,25 @@ public class PacketHandler
         }
 
         pc.SetCost(packet.RemainCost);
+    }
+
+    public static void SC_PLAYER_HAND_UPDATE_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = SC_PLAYER_HAND_UPDATE.GetRootAsSC_PLAYER_HAND_UPDATE(new ByteBuffer(buffer.Array, buffer.Offset));
+        var go = GameObject.Find("player");
+        if (go == null)
+        {
+            Debug.LogError($"HandUpdate Player is null");
+            return;
+        }
+
+        var pc = go.GetComponent <PlayerController>();
+        if(pc == null)
+        {
+            Debug.LogError($"HandUpdate PC is null");
+            return;
+        }
+
+        pc.SetHands(Util.ConvertCardInfosToCards(packet.PlayerHands, packet.PlayerHandsLength));
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class BulletController : MonoBehaviour
 {
-    public TowerController _tower;
+    public UnitBaseController _attacker;
     public UnitBaseController _target;
     private float Speed = 10.0f;
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PacketUtil
 {
-    public static byte[] CS_GREET_PACKET(string data)
+    public static byte[] CS_GREET_Packet(string data)
     {
         var builder = new FlatBufferBuilder(1024);
         var dataOffset = builder.CreateString(data);
@@ -22,7 +22,7 @@ public class PacketUtil
     }
 
 
-    public static byte[] CS_UNIT_SPAWN_PACKET(long roomId, int unitType, Vector2 pos)
+    public static byte[] CS_UNIT_SPAWN_Packet(long roomId, int unitType, Vector2 pos)
     {
         var builder = new FlatBufferBuilder(1024);
 
@@ -39,6 +39,24 @@ public class PacketUtil
         var stream = new byte[bodyArr.Length + 4];
         Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
         Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.CS_UNIT_SPAWN), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
+
+    public static byte[] CM_MATCH_START_Packet(long playerId, int playerMmr)
+    {
+        var builder = new FlatBufferBuilder(1024);
+
+        CM_MATCH_START.StartCM_MATCH_START(builder);
+        CM_MATCH_START.AddPlayerId(builder, playerId);
+        CM_MATCH_START.AddPlayerMmr(builder, playerMmr);
+        var offset = CM_MATCH_START.EndCM_MATCH_START(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.CM_MATCH_START), 0, stream, 2, 2);
         Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
         return stream;
     }

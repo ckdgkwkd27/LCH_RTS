@@ -1,9 +1,7 @@
 using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
+using System.Linq;
 using LCH_RTS.Contents.Units;
 using LCH_RTS.Job;
-using System.Collections.Generic;
-
 namespace LCH_RTS.Contents;
 //#TODO: 별개의 매칭서버로 옮겨야 한다!
 
@@ -15,6 +13,7 @@ public static class PlayerSideHelper
         {
             EPlayerSide.Blue => EPlayerSide.Red,
             EPlayerSide.Red => EPlayerSide.Blue,
+            EPlayerSide.Max => throw new Exception(),
             _ => throw new ArgumentOutOfRangeException(nameof(side), side, null)
         };
     }
@@ -23,6 +22,7 @@ public static class PlayerSideHelper
 public enum ERoomState
 {
     Waiting,
+    PreStart,
     Start,
     End,
     
@@ -32,6 +32,7 @@ public enum ERoomState
 public class GameRoom: JobSerializer
 {
     public long RoomId { get;}
+    private readonly List<long> _tempPlayerIds = [];
     private readonly Dictionary<EPlayerSide, List<Unit>> _playerUnit = new();
     private Dictionary<EPlayerSide, List<Tower>> _playerTower = new();
     private Dictionary<EPlayerSide, List<UnitBase>> _allUnits = new();
@@ -41,6 +42,7 @@ public class GameRoom: JobSerializer
     
     private List<WayPoint> _wayPoints = [];
     private ERoomState _roomState = ERoomState.Waiting;
+    private long _gameStartTime = 0;
     
     public GameRoom(long roomId)
     {
@@ -49,6 +51,8 @@ public class GameRoom: JobSerializer
 
     private void GameStart()
     {
+        _gameStartTime = 0;
+        
         var sideTowerType = UnitUtil.GetUnitTypeFromName("SideTower");
         var kingTowerType = UnitUtil.GetUnitTypeFromName("KingTower");
         
@@ -96,13 +100,13 @@ public class GameRoom: JobSerializer
             PacketUtil.SC_PLAYER_COST_UPDATE_PACKET(RoomId, firstCost);
         });
         
-        _roomState = ERoomState.Start;
-        PushAfter(1000, Update);
+        SetRoomState(ERoomState.Start);
+        // PushAfter(1000, Update); // 중복 제거: Update는 GameReady()에서 이미 스케줄링됨
     }
 
     // ReSharper disable once InconsistentNaming
     private const int INVALID_PLAYER_ID_VALUE = 0;
-    public void AddPlayer(Player player) //#TODO: 여기에다가 PlayerInGameInfo 만들기 player => InGameInfo
+    public EPlayerSide AddPlayer(Player player, PlayerDeck deck, List<Card> hand)
     {
         for (var i = 0; i < _playerSideIds.Length; i++)
         {
@@ -112,9 +116,19 @@ public class GameRoom: JobSerializer
             _playerSideIds[i] = player.PlayerId;
 
             var playerSide = (EPlayerSide)i;
-            _playerInGameInfos[playerSide] = new PlayerInGameInfo(player, playerSide, RoomId, 0);
-            return;
+            _playerInGameInfos[playerSide] = new PlayerInGameInfo(player, playerSide, RoomId, 0, deck, hand);
+            Console.WriteLine($"Player {player.PlayerId} added to the game");
+            return (EPlayerSide)i;
         }
+
+        Console.WriteLine($"[WARNING] Player {player.PlayerId} could not be added to the game");
+        return EPlayerSide.Max;
+    }
+
+    public void AddPlayers(long playerId1, long playerId2)
+    {
+        _tempPlayerIds.Add(playerId1);
+        _tempPlayerIds.Add(playerId2);
     }
 
     public long GetPlayerId(EPlayerSide playerSide)
@@ -126,13 +140,18 @@ public class GameRoom: JobSerializer
     {
         if (_playerSideIds.Any(id => id == INVALID_PLAYER_ID_VALUE))
         {
+            Console.WriteLine($"[WARNING] Game is not ready for room {RoomId}");
             return;
         }
 
-        if (_roomState == ERoomState.Waiting)
-        {
-            GameStart();
-        }
+        if (_roomState != ERoomState.Waiting) 
+            return;
+        
+        SetRoomState(ERoomState.PreStart);
+        _gameStartTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 3;
+        PushAfter(1000, Update); // Update 스케줄링은 여기서만 한 번만 수행
+        
+        Console.WriteLine($"Game will start at {_gameStartTime}");
     }
 
     public EPlayerSide GetPlayerSide(Player player)
@@ -184,7 +203,9 @@ public class GameRoom: JobSerializer
         //Units
         foreach(var (_, units) in _playerUnit)
         {
-            foreach (var unit in units)
+            // #TODO: 제거가능 테스트, 컴렉션 수정 중 열거 오류를 방지하기 위해 복사본 사용
+            var unitsCopy = units.ToList();
+            foreach (var unit in unitsCopy)
             {
                 unit.Update();
 
@@ -197,16 +218,27 @@ public class GameRoom: JobSerializer
 		foreach(var (side, towers) in _playerTower)
         {
             var oppositeSide = PlayerSideHelper.GetOppositeSide(side);
-            foreach (var tower in towers)
+            // #TODO: 제거가능 테스트, 컴렉션 수정 중 열거 오류를 방지하기 위해 복사본 사용
+            var towersCopy = towers.ToList();
+            foreach (var tower in towersCopy)
             {
                 if(_playerUnit.TryGetValue(oppositeSide, out var units))
                     tower.CheckClosestUnit([..units]);
             }
 
-            towers.ForEach(tower => tower.Update());
+            towersCopy.ForEach(tower => tower.Update());
         }
-        
-        
+
+        if (_roomState == ERoomState.PreStart)
+        {
+            var utcNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (utcNow > _gameStartTime)
+            {
+                GameStart();
+                Console.WriteLine($"Game Start roomId={RoomId}");
+            }
+        }
+
         PushAfter(1000, Update);
     }
 
@@ -227,6 +259,16 @@ public class GameRoom: JobSerializer
     {
         return _wayPoints;
     }
+
+    public void SetRoomState(ERoomState state)
+    {
+        _roomState = state;
+    }
+
+    public ERoomState GetRoomState()
+    {
+        return _roomState;
+    }
     
     public int DecreaseCost(EPlayerSide playerSide, int unitStatCost)
     {
@@ -237,5 +279,44 @@ public class GameRoom: JobSerializer
     public int GetPlayerCost(EPlayerSide playerSide)
     {
         return _playerInGameInfos[playerSide].RemainCost;
+    }
+
+    public void HandsUpdate(EPlayerSide playerSide, long playerId, int unitType)
+    {
+        var playerInfo = _playerInGameInfos[playerSide];
+        var deck = playerInfo.Deck;
+        var hands = playerInfo.Hand;
+        
+        var cardToRemove = hands.FirstOrDefault(card => card.UnitType == unitType);
+        if (cardToRemove != null)
+        {
+            hands.Remove(cardToRemove);
+            CardUtil.DrawCard(deck, hands);
+        }
+        else
+        {
+            Console.WriteLine($"[WARNING] Card with UnitType {unitType} not found in player's hand");
+        }
+
+        var handsConverted = CardUtil.ConvertToCardInfos(playerInfo.Hand);
+        _playerInGameInfos[playerSide].Player.Session?.Send(PacketUtil.SC_PLAYER_HAND_UPDATE_PACKET(RoomId, playerId, handsConverted));
+    }
+
+    public List<Card> GetNextHands(EPlayerSide playerSide)
+    {
+        var playerInfo = _playerInGameInfos[playerSide];
+        var deck = playerInfo.Deck;
+        var hands = playerInfo.Hand;
+        
+        var nextHands = new List<Card>(hands);
+        CardUtil.DrawCard(deck, nextHands);
+        return nextHands;
+    }
+    
+    public bool HasCardInHand(EPlayerSide playerSide, int unitType)
+    {
+        var playerInfo = _playerInGameInfos[playerSide];
+        var hands = playerInfo.Hand;
+        return hands.Any(card => card.UnitType == unitType);
     }
 }

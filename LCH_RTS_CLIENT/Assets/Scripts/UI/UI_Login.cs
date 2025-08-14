@@ -24,7 +24,8 @@ public class UI_Login : MonoBehaviour
             string host = Dns.GetHostName();
             IPHostEntry ipHost = Dns.GetHostEntry(host);
             IPAddress ipAddr = ipHost.AddressList[0];
-            IPEndPoint endPoint = new IPEndPoint(ipAddr, 8888);
+            //IPEndPoint endPoint = new IPEndPoint(ipAddr, 8888); (Game Server)
+            IPEndPoint endPoint = new IPEndPoint(ipAddr, 8001);
 
             Connector connector = new Connector();
             connector.Connect(endPoint, new ServerSession(), 1);

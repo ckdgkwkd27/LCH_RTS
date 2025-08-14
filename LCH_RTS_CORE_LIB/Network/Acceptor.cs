@@ -6,16 +6,14 @@ namespace LCH_RTS_CORE_LIB.Network;
 public class Acceptor
 {
     private Socket _listenSocket;
-    private Session _session;
+    private Func<Session> _sessionFactory;
 
-    public void Init(IPEndPoint endPoint, int maxListenCnt, int maxRegisterCnt, Session session)
+    public void Init(IPEndPoint endPoint, Func<Session> sessionFactory, int maxListenCnt = 10, int maxRegisterCnt = 10)
     {
         _listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
         _listenSocket.NoDelay = true;
-        
-        _session = session;
-        _session.SetSocket(_listenSocket);
-        
+
+        _sessionFactory += sessionFactory;
         try
         {
             _listenSocket.Bind(endPoint);
@@ -26,7 +24,7 @@ public class Acceptor
             for (var i = 0; i < maxRegisterCnt; i++)
             {
                 var args = new SocketAsyncEventArgs();
-                args.Completed += OnAcceptCompleted!;
+                args.Completed += OnAcceptCompleted;
                 RegisterAccept(args);
             }
         }
@@ -36,14 +34,14 @@ public class Acceptor
         }
     }
 
-    public void RegisterAccept(SocketAsyncEventArgs args)
+    private void RegisterAccept(SocketAsyncEventArgs args)
     {
         args.AcceptSocket = null;
 
         try
         {
             var pending = _listenSocket.AcceptAsync(args);
-            if (pending == false)
+            if (!pending)
                 OnAcceptCompleted(null, args);
         }
         catch (Exception e)
@@ -56,15 +54,9 @@ public class Acceptor
     {
         try
         {
-            if (args.SocketError == SocketError.Success)
+            if (args is { SocketError: SocketError.Success, AcceptSocket.RemoteEndPoint: not null })
             {
-                var session = SessionManager.AcquireFromPool();
-                if (session is null)
-                {
-                    Console.WriteLine("[Acceptor] Session is null");
-                    return;
-                }
-                
+                var session = _sessionFactory();
                 session.Start(args.AcceptSocket);
                 session.OnConnected(args.AcceptSocket.RemoteEndPoint);
             }
