@@ -2,19 +2,18 @@ using UnityEngine;
 using System.Net;
 using System;
 
-public class ServerSession : PacketSession
+public class GameSession : PacketSession
 {
-    public long PlayerId { get; set; }
+    public PlayerController PlayerController;
 
     public override void OnRecvPacket(ArraySegment<byte> buffer)
     {
         PacketProcessor.Instance.OnRecvPacket(this, buffer);
     }
-    
+
     public override void OnConnected(EndPoint endPoint)
     {
-        Debug.Log($"[Matching OnConnected] {endPoint.ToString()}");
-        Managers.Network.SendToMatch(PacketUtil.CM_MATCH_START_Packet(  ));
+        Debug.Log($"[GameServer OnConnected] {endPoint.ToString()}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
@@ -25,7 +24,7 @@ public class ServerSession : PacketSession
     public override void OnSend(int numOfBytes)
     {
     }
-    
+
     public override void FlushSend()
     {
     }

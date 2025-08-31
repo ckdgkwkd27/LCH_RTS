@@ -20,6 +20,7 @@ public class PacketProcessor
     {
         {
             _handler.Add(PACKET_ID.CS_GREET, PacketHandler.CS_GREET_Handler);
+            _handler.Add(PACKET_ID.CS_ENTER_GAME, PacketHandler.CS_ENTER_GAME_Handler);
             _handler.Add(PACKET_ID.CS_UNIT_SPAWN, PacketHandler.CS_UNIT_SPAWN_Handler);
 
             _handler.Add(PACKET_ID.MG_GAME_READY, PacketHandler.MG_GAME_READY_Handler);
@@ -27,6 +28,7 @@ public class PacketProcessor
 
         {
             _deserializer.Add(PACKET_ID.CS_GREET, MakePacket<CS_GREET>);
+            _deserializer.Add(PACKET_ID.CS_ENTER_GAME, MakePacket<CS_ENTER_GAME>);
             _deserializer.Add(PACKET_ID.CS_UNIT_SPAWN, MakePacket<CS_UNIT_SPAWN>);
 
             _deserializer.Add(PACKET_ID.MG_GAME_READY, MakePacket<MG_GAME_READY>);

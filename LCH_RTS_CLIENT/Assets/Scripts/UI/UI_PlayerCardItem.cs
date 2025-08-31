@@ -63,7 +63,7 @@ public class UI_PlayerCardItem : MonoBehaviour, IPointerEnterHandler, IPointerEx
             }
 
             Vector3 worldPos = hit.point;
-            Managers.Network.Send(PacketUtil.CS_UNIT_SPAWN_Packet(pc.RoomId, cardInfo.unitType, worldPos));
+            Managers.Network.SendToGame(PacketUtil.CS_UNIT_SPAWN_Packet(pc.RoomId, cardInfo.unitType, worldPos));
             Debug.Log($"EndDrag=>UnitType={cardInfo.unitType}");
         }
     }

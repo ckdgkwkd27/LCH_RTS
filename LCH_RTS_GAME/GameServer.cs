@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
@@ -30,8 +31,21 @@ internal abstract class Program
     {
         var host = Dns.GetHostName();
         var ipHost = Dns.GetHostEntry(host);
-        var ipAddr = ipHost.AddressList[0];
+        
+        // VPN 주소를 제외하고 실제 로컬 네트워크 IPv4 주소 찾기
+        var ipAddr = ipHost.AddressList
+            .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
+            .Where(addr => !IPAddress.IsLoopback(addr))
+            .FirstOrDefault(addr => !IsPrivate(addr));
 
+        if (ipAddr == null)
+        {
+            Console.WriteLine("Failed to find local IPv4 address. Using loopback.");
+            ipAddr = IPAddress.Loopback;
+        }
+
+        Console.WriteLine($"GameServer binding to: {ipAddr}");
+        
         var endPoint = new IPEndPoint(ipAddr, NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT));
 
         var acceptor = new Acceptor();
@@ -54,7 +68,7 @@ internal abstract class Program
             {
                 Name = "Game Room"
             };
-            t. Start();
+            t.Start();
         }
         
         Console.WriteLine("GameServer is running...");
@@ -63,6 +77,8 @@ internal abstract class Program
         {
             var matchingHost = Dns.GetHostName();
             var matchingIpHost = Dns.GetHostEntry(matchingHost);
+            
+            // 매칭 서버도 동일한 로직 적용
             var matchingIpAddr = matchingIpHost.AddressList[0];
             const int matchingPort = 8002;
             var matchingEndPoint = new IPEndPoint(matchingIpAddr, matchingPort);
@@ -75,5 +91,17 @@ internal abstract class Program
         {
             Console.WriteLine($"[ERROR] Failed to connect to Matching Server: {ex.Message}");
         }
+    }
+
+    private static bool IsPrivate(IPAddress ip)
+    {
+        var bytes = ip.GetAddressBytes();
+        return bytes[0] switch
+        {
+            10 => true,
+            172 => bytes[1] >= 16 && bytes[1] <= 31,
+            192 => bytes[1] == 168,
+            _ => false
+        };
     }
 }

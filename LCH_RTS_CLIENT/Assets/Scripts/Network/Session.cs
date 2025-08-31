@@ -45,8 +45,6 @@ public abstract class Session
     private readonly SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
     private readonly SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
 
-    private readonly SocketAsyncEventArgs _acceptArgs = new SocketAsyncEventArgs();
-
     public abstract void OnConnected(EndPoint endPoint);
     public abstract void OnDisconnected(EndPoint endPoint);
     public abstract int OnRecv(ArraySegment<byte> buffer);
@@ -193,14 +191,12 @@ public abstract class Session
         {
             try
             {
-                // Write 커서 이동
                 if (_recvBuffer.OnWrite(args.BytesTransferred) == false)
                 {
                     Disconnect();
                     return;
                 }
 
-                // 컨텐츠 쪽으로 데이터를 넘겨주고 얼마나 처리했는지 받는다
                 var processLen = OnRecv(_recvBuffer.ReadSegment);
                 if (processLen < 0 || _recvBuffer.DataSize < processLen)
                 {
@@ -208,7 +204,6 @@ public abstract class Session
                     return;
                 }
 
-                // Read 커서 이동
                 if (_recvBuffer.OnRead(processLen) == false)
                 {
                     Disconnect();

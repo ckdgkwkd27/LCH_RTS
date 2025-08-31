@@ -12,20 +12,22 @@ public enum PACKET_ID : ushort
   SC_GREET = 2,
   CS_LOGIN = 3,
   SC_LOGIN = 4,
-  SC_ENTER_GAME = 5,
-  CS_UNIT_SPAWN = 6,
-  SC_UNIT_SPAWN = 7,
-  SC_UNIT_MOVE = 8,
-  SC_UNIT_ATTACK = 9,
-  SC_REMOVE_UNIT = 10,
-  SC_END_GAME = 11,
-  SC_ENTER_LOBBY = 12,
-  SC_PLAYER_COST_UPDATE = 13,
-  SC_PLAYER_HAND_UPDATE = 14,
-  CM_MATCH_START = 15,
-  MC_MATCH_JOIN_INFO = 16,
-  MG_GAME_READY = 17,
-  PACKET_MAX = 18,
+  CS_ENTER_GAME = 5,
+  SC_ENTER_GAME = 6,
+  CS_UNIT_SPAWN = 7,
+  SC_UNIT_SPAWN = 8,
+  SC_UNIT_MOVE = 9,
+  SC_UNIT_ATTACK = 10,
+  SC_REMOVE_UNIT = 11,
+  SC_END_GAME = 12,
+  SC_ENTER_LOBBY = 13,
+  SC_PLAYER_COST_UPDATE = 14,
+  SC_PLAYER_HAND_UPDATE = 15,
+  CM_MATCH_START = 16,
+  MC_MATCH_JOIN_INFO = 17,
+  MC_PLAYER_REGISTERED = 18,
+  MG_GAME_READY = 19,
+  PACKET_MAX = 20,
 };
 
 public struct Vec2 : IFlatbufferObject
@@ -303,17 +305,17 @@ public struct SC_LOGIN : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public SC_LOGIN __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public long PlayerId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public long RoomId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
 
   public static Offset<SC_LOGIN> CreateSC_LOGIN(FlatBufferBuilder builder,
-      long player_id = 0) {
+      long room_id = 0) {
     builder.StartTable(1);
-    SC_LOGIN.AddPlayerId(builder, player_id);
+    SC_LOGIN.AddRoomId(builder, room_id);
     return SC_LOGIN.EndSC_LOGIN(builder);
   }
 
   public static void StartSC_LOGIN(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddPlayerId(FlatBufferBuilder builder, long playerId) { builder.AddLong(0, playerId, 0); }
+  public static void AddRoomId(FlatBufferBuilder builder, long roomId) { builder.AddLong(0, roomId, 0); }
   public static Offset<SC_LOGIN> EndSC_LOGIN(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<SC_LOGIN>(o);
@@ -326,7 +328,49 @@ static public class SC_LOGINVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*RoomId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct CS_ENTER_GAME : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static CS_ENTER_GAME GetRootAsCS_ENTER_GAME(ByteBuffer _bb) { return GetRootAsCS_ENTER_GAME(_bb, new CS_ENTER_GAME()); }
+  public static CS_ENTER_GAME GetRootAsCS_ENTER_GAME(ByteBuffer _bb, CS_ENTER_GAME obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public CS_ENTER_GAME __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public long PlayerId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public long RoomId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+
+  public static Offset<CS_ENTER_GAME> CreateCS_ENTER_GAME(FlatBufferBuilder builder,
+      long player_id = 0,
+      long room_id = 0) {
+    builder.StartTable(2);
+    CS_ENTER_GAME.AddRoomId(builder, room_id);
+    CS_ENTER_GAME.AddPlayerId(builder, player_id);
+    return CS_ENTER_GAME.EndCS_ENTER_GAME(builder);
+  }
+
+  public static void StartCS_ENTER_GAME(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void AddPlayerId(FlatBufferBuilder builder, long playerId) { builder.AddLong(0, playerId, 0); }
+  public static void AddRoomId(FlatBufferBuilder builder, long roomId) { builder.AddLong(1, roomId, 0); }
+  public static Offset<CS_ENTER_GAME> EndCS_ENTER_GAME(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<CS_ENTER_GAME>(o);
+  }
+}
+
+
+static public class CS_ENTER_GAMEVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
       && verifier.VerifyField(tablePos, 4 /*PlayerId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*RoomId*/, 8 /*long*/, 8, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -795,21 +839,8 @@ public struct CM_MATCH_START : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public CM_MATCH_START __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public long PlayerId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
-  public int PlayerMmr { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
 
-  public static Offset<CM_MATCH_START> CreateCM_MATCH_START(FlatBufferBuilder builder,
-      long player_id = 0,
-      int player_mmr = 0) {
-    builder.StartTable(2);
-    CM_MATCH_START.AddPlayerId(builder, player_id);
-    CM_MATCH_START.AddPlayerMmr(builder, player_mmr);
-    return CM_MATCH_START.EndCM_MATCH_START(builder);
-  }
-
-  public static void StartCM_MATCH_START(FlatBufferBuilder builder) { builder.StartTable(2); }
-  public static void AddPlayerId(FlatBufferBuilder builder, long playerId) { builder.AddLong(0, playerId, 0); }
-  public static void AddPlayerMmr(FlatBufferBuilder builder, int playerMmr) { builder.AddInt(1, playerMmr, 0); }
+  public static void StartCM_MATCH_START(FlatBufferBuilder builder) { builder.StartTable(0); }
   public static Offset<CM_MATCH_START> EndCM_MATCH_START(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<CM_MATCH_START>(o);
@@ -822,8 +853,6 @@ static public class CM_MATCH_STARTVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyField(tablePos, 4 /*PlayerId*/, 8 /*long*/, 8, false)
-      && verifier.VerifyField(tablePos, 6 /*PlayerMmr*/, 4 /*int*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -837,31 +866,35 @@ public struct MC_MATCH_JOIN_INFO : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public MC_MATCH_JOIN_INFO __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public long MatchId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
-  public string Ip { get { int o = __p.__offset(6); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
+  public long PlayerId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public long MatchId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public string Ip { get { int o = __p.__offset(8); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
 #if ENABLE_SPAN_T
-  public Span<byte> GetIpBytes() { return __p.__vector_as_span<byte>(6, 1); }
+  public Span<byte> GetIpBytes() { return __p.__vector_as_span<byte>(8, 1); }
 #else
-  public ArraySegment<byte>? GetIpBytes() { return __p.__vector_as_arraysegment(6); }
+  public ArraySegment<byte>? GetIpBytes() { return __p.__vector_as_arraysegment(8); }
 #endif
-  public byte[] GetIpArray() { return __p.__vector_as_array<byte>(6); }
-  public int Port { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
+  public byte[] GetIpArray() { return __p.__vector_as_array<byte>(8); }
+  public int Port { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetInt(o + __p.bb_pos) : (int)0; } }
 
   public static Offset<MC_MATCH_JOIN_INFO> CreateMC_MATCH_JOIN_INFO(FlatBufferBuilder builder,
+      long player_id = 0,
       long match_id = 0,
       StringOffset ipOffset = default(StringOffset),
       int port = 0) {
-    builder.StartTable(3);
+    builder.StartTable(4);
     MC_MATCH_JOIN_INFO.AddMatchId(builder, match_id);
+    MC_MATCH_JOIN_INFO.AddPlayerId(builder, player_id);
     MC_MATCH_JOIN_INFO.AddPort(builder, port);
     MC_MATCH_JOIN_INFO.AddIp(builder, ipOffset);
     return MC_MATCH_JOIN_INFO.EndMC_MATCH_JOIN_INFO(builder);
   }
 
-  public static void StartMC_MATCH_JOIN_INFO(FlatBufferBuilder builder) { builder.StartTable(3); }
-  public static void AddMatchId(FlatBufferBuilder builder, long matchId) { builder.AddLong(0, matchId, 0); }
-  public static void AddIp(FlatBufferBuilder builder, StringOffset ipOffset) { builder.AddOffset(1, ipOffset.Value, 0); }
-  public static void AddPort(FlatBufferBuilder builder, int port) { builder.AddInt(2, port, 0); }
+  public static void StartMC_MATCH_JOIN_INFO(FlatBufferBuilder builder) { builder.StartTable(4); }
+  public static void AddPlayerId(FlatBufferBuilder builder, long playerId) { builder.AddLong(0, playerId, 0); }
+  public static void AddMatchId(FlatBufferBuilder builder, long matchId) { builder.AddLong(1, matchId, 0); }
+  public static void AddIp(FlatBufferBuilder builder, StringOffset ipOffset) { builder.AddOffset(2, ipOffset.Value, 0); }
+  public static void AddPort(FlatBufferBuilder builder, int port) { builder.AddInt(3, port, 0); }
   public static Offset<MC_MATCH_JOIN_INFO> EndMC_MATCH_JOIN_INFO(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<MC_MATCH_JOIN_INFO>(o);
@@ -874,9 +907,47 @@ static public class MC_MATCH_JOIN_INFOVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyField(tablePos, 4 /*MatchId*/, 8 /*long*/, 8, false)
-      && verifier.VerifyString(tablePos, 6 /*Ip*/, false)
-      && verifier.VerifyField(tablePos, 8 /*Port*/, 4 /*int*/, 4, false)
+      && verifier.VerifyField(tablePos, 4 /*PlayerId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*MatchId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyString(tablePos, 8 /*Ip*/, false)
+      && verifier.VerifyField(tablePos, 10 /*Port*/, 4 /*int*/, 4, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct MC_PLAYER_REGISTERED : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static MC_PLAYER_REGISTERED GetRootAsMC_PLAYER_REGISTERED(ByteBuffer _bb) { return GetRootAsMC_PLAYER_REGISTERED(_bb, new MC_PLAYER_REGISTERED()); }
+  public static MC_PLAYER_REGISTERED GetRootAsMC_PLAYER_REGISTERED(ByteBuffer _bb, MC_PLAYER_REGISTERED obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public MC_PLAYER_REGISTERED __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public long PlayerId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+
+  public static Offset<MC_PLAYER_REGISTERED> CreateMC_PLAYER_REGISTERED(FlatBufferBuilder builder,
+      long player_id = 0) {
+    builder.StartTable(1);
+    MC_PLAYER_REGISTERED.AddPlayerId(builder, player_id);
+    return MC_PLAYER_REGISTERED.EndMC_PLAYER_REGISTERED(builder);
+  }
+
+  public static void StartMC_PLAYER_REGISTERED(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddPlayerId(FlatBufferBuilder builder, long playerId) { builder.AddLong(0, playerId, 0); }
+  public static Offset<MC_PLAYER_REGISTERED> EndMC_PLAYER_REGISTERED(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<MC_PLAYER_REGISTERED>(o);
+  }
+}
+
+
+static public class MC_PLAYER_REGISTEREDVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*PlayerId*/, 8 /*long*/, 8, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

@@ -28,7 +28,7 @@ public class UI_Login : MonoBehaviour
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 8001);
 
             Connector connector = new Connector();
-            connector.Connect(endPoint, new ServerSession(), 1);
+            connector.Connect(endPoint, () => new ServerSession());
         }
     }
 }

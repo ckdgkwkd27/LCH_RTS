@@ -4,9 +4,9 @@ using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_MATCHING.Network;
 
-//#TODO: 현재는 임시이며, 로비서버가 클라이언트를 받아야 한다
 public class ClientSession : PacketSession
 {
+    public long PlayerId { get; private set; }
     public ClientSession()
     {
         sessionCategory = EPacketSessionCategory.ClientSession;
@@ -20,9 +20,11 @@ public class ClientSession : PacketSession
     private List<ArraySegment<byte>> _reserveQueue = [];
     
     public override void OnConnected(EndPoint endPoint)
-    { 
+    {
+        PlayerId = PlayerIdGenerator.Instance.NextId();
+        Send(PacketUtil.MC_PLAYER_REGISTERED_PACKET(PlayerId));
         MatchingServerSessionManager.AddSession(this);
-        Console.WriteLine($"Client OnConnected : {endPoint}");
+        Console.WriteLine($"Client OnConnected : {endPoint}, PlayerId={PlayerId}");
     }
     
     public override void OnDisconnected(EndPoint endPoint)

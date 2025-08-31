@@ -8,8 +8,11 @@ public abstract class PacketHandler
 {
     public static void CM_MATCH_START_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
-        var packet = CM_MATCH_START.GetRootAsCM_MATCH_START(new ByteBuffer(buffer.Array, buffer.Offset));
-        MatchManager.Instance.Enqueue(new MatcherInfo(packet.PlayerId, packet.PlayerMmr, session));
-        Console.WriteLine($"NewMatch Add. Player={packet.PlayerId}, MMR={packet.PlayerMmr}");
+        CM_MATCH_START.GetRootAsCM_MATCH_START(new ByteBuffer(buffer.Array, buffer.Offset));
+
+        var playerId = (session as ClientSession)!.PlayerId;
+        var playerMmr = new Random().Next(500);
+        MatchManager.Instance.Enqueue(new MatcherInfo(playerId, playerMmr, session));
+        Console.WriteLine($"NewMatch Add. Player={playerId}, MMR={playerMmr}");
     }
 }

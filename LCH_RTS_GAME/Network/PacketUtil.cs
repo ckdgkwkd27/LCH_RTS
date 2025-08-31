@@ -5,11 +5,10 @@ namespace LCH_RTS;
 
 public static class PacketUtil
 {
-    public static byte[] SC_LOGIN_PACKET(long playerId)
+    public static byte[] SC_LOGIN_PACKET()
     {
         var builder = new FlatBufferBuilder(1024);
         SC_LOGIN.StartSC_LOGIN(builder);
-        SC_LOGIN.AddPlayerId(builder, playerId);
         var offset = SC_LOGIN.EndSC_LOGIN(builder);
         builder.Finish(offset.Value);
         var bodyArr = builder.SizedByteArray();

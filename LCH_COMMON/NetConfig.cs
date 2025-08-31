@@ -10,6 +10,8 @@ public enum EPortInfo
 
 public static class NetConfig
 {
+    public static string Ip { get; } = "127.0.0.1";
+
     public static int GetPort(EPortInfo port)
     {
         return Convert.ToInt32(port);

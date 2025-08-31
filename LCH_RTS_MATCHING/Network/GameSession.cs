@@ -6,7 +6,7 @@ namespace LCH_RTS_MATCHING.Network;
 
 public class GameSession : PacketSession
 {
-    public static GameSession GameServer = new GameSession();
+    public static GameSession? GameServer = new();
     
     public GameSession()
     {
@@ -23,12 +23,14 @@ public class GameSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     {
         MatchingServerSessionManager.AddSession(this);
+        GameServer = this;
         Console.WriteLine($"GameSession OnConnected : {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
         MatchingServerSessionManager.RemoveSession(this);
+        GameServer = null;
         Console.WriteLine($"GameSession OnDisconnected : {endPoint}");
     }
 

@@ -1,40 +1,59 @@
-using System.Collections.Generic;
-using System.Net;
-using System;
-using UnityEditor;
 
 public class NetworkManager
 {
-    ServerSession _session;
+    ServerSession _matchSession;
+    GameSession _gameSession;
 
     public void Init()
     {
     }
 
-    public void SetSession(ServerSession session)
+    public void SetSession(PacketSession session)
     {
-        _session = session;
+        switch (session)
+        {
+            case ServerSession:
+                SetMatchSession(session as ServerSession);
+                break;
+            case GameSession:
+                SetGameSession(session as GameSession);
+                break;
+            default:
+                throw new System.Exception();
+        }
+    }
 
-        //EditorApplication.playModeStateChanged += (state) =>
-        //{
-        //    if (state == PlayModeStateChange.ExitingEditMode)
-        //    {
-        //        _session.Disconnect();
-        //    }
-        //};
+    public void SetMatchSession(ServerSession session)
+    {
+        _matchSession = session;
+    }
+
+    public void SetGameSession(GameSession session)
+    {
+        _gameSession = session;
     }
 
     public void Disconnect()
     {
-        if(!_session._disconnected)
-            _session.Disconnect(); 
+        if(!_matchSession._disconnected)    _matchSession.Disconnect(); 
+        if(!_gameSession._disconnected)     _gameSession.Disconnect();
     }
 
-    public void Send(byte[] stream)
+    public void SendToMatch(byte[] stream)
     {
-        _session.Send(stream);
+        _matchSession.Send(stream);
     }
 
+    public void SendToGame(byte[] stream)
+    {
+        _gameSession.Send(stream);
+    }
+
+    public void DisconnectGameSession()
+    {
+        _gameSession?.Disconnect();
+        _gameSession = null;
+    }
 
     public void Update()
     {

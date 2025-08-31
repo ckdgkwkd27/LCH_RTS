@@ -40,14 +40,20 @@ public sealed class GameRoomManager
 
     public GameRoom? GetRoom(long roomId)
     {
-        return _rooms.FirstOrDefault(r => r.RoomId == roomId) ?? null;
+        using(_lock.EnterScope())
+        {
+            return _rooms.FirstOrDefault(r => r.RoomId == roomId) ?? null;
+        }
     }
     
     public void Update()
     {
-        foreach (var gameRoom in _rooms)
+        using (_lock.EnterScope())
         {
-            gameRoom.Flush();
+            foreach (var gameRoom in _rooms)
+            {
+                gameRoom.Flush();
+            }
         }
     }
 }

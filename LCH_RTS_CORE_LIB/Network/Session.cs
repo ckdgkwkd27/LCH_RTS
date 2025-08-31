@@ -241,9 +241,4 @@ public abstract class Session
             Disconnect();
         }
     }
-        
-    public EndPoint? GetLocalEndPoint()
-    {
-        return _socket?.LocalEndPoint;
-    }
 }

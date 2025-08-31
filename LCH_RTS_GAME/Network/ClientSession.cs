@@ -23,22 +23,8 @@ public class ClientSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     { 
         GameServerSessionManager.AddSession(this);
+        Send(PacketUtil.SC_LOGIN_PACKET());
         Console.WriteLine($"OnConnected : {endPoint}");
-
-        var player = PlayerManager.Instance.AddPlayer(this);
-        var room = GameRoomManager.Instance.GetRoom(1);
-        if(room is null) return;
-        Send(PacketUtil.SC_LOGIN_PACKET(player.PlayerId));
-        
-        var deck = new PlayerDeck();
-        deck.MakeTestDeck();
-
-        var hands = deck.ShuffleAndTake(PlayerDeck.MAX_CARD_LIST);
-        var playerSide = room.AddPlayer(player, deck, hands);
-
-        Send(PacketUtil.SC_ENTER_GAME_PACKET(1, room.GetPlayerId(playerSide), (byte)playerSide, 0, CardUtil.ConvertToCardInfos(hands).ToArray()));
-        
-        room.GameReady();
     }
     
     public override void OnDisconnected(EndPoint endPoint)

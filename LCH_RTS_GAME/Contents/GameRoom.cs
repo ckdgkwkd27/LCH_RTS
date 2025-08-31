@@ -25,6 +25,7 @@ public enum ERoomState
     PreStart,
     Start,
     End,
+    Reset,
     
     Max
 }
@@ -90,6 +91,7 @@ public class GameRoom: JobSerializer
             foreach (var tower in towers)
             {
                 Broadcast(PacketUtil.SC_UNIT_SPAWN_PACKET(tower.UnitId, playerSide, tower.UnitType, tower.Pos, tower.Stat));
+                Console.WriteLine("[DEBUG] SC_UNIT_SPAWN_PACKET sent!");
             }
         }
         
@@ -106,8 +108,13 @@ public class GameRoom: JobSerializer
 
     // ReSharper disable once InconsistentNaming
     private const int INVALID_PLAYER_ID_VALUE = 0;
-    public EPlayerSide AddPlayer(Player player, PlayerDeck deck, List<Card> hand)
+    public void AddPlayer(Player player, PlayerDeck deck, List<Card> hand)
     {
+        // if (!_tempPlayerIds.Contains(player.PlayerId))
+        // {
+        //     return EPlayerSide.Max;
+        // }
+        
         for (var i = 0; i < _playerSideIds.Length; i++)
         {
             if (_playerSideIds[i] != INVALID_PLAYER_ID_VALUE) 
@@ -117,12 +124,15 @@ public class GameRoom: JobSerializer
 
             var playerSide = (EPlayerSide)i;
             _playerInGameInfos[playerSide] = new PlayerInGameInfo(player, playerSide, RoomId, 0, deck, hand);
-            Console.WriteLine($"Player {player.PlayerId} added to the game");
-            return (EPlayerSide)i;
+            player.Session?.Send(PacketUtil.SC_ENTER_GAME_PACKET(RoomId, GetPlayerId(playerSide), (byte)playerSide, 0,
+                CardUtil.ConvertToCardInfos(deck.ShuffleAndTake(PlayerDeck.MAX_CARD_LIST)).ToArray()));
+            Console.WriteLine($"Player {player.PlayerId}({playerSide}) added to the game");
+            return;
+            //return (EPlayerSide)i;
         }
 
         Console.WriteLine($"[WARNING] Player {player.PlayerId} could not be added to the game");
-        return EPlayerSide.Max;
+        //return EPlayerSide.Max;
     }
 
     public void AddPlayers(long playerId1, long playerId2)
@@ -193,6 +203,11 @@ public class GameRoom: JobSerializer
     private const int MaxPlayerCost = 10;
     private void Update()
     {
+        if (_roomState == ERoomState.End)
+        {
+            return;
+        }
+        
         //Players
         foreach (var (_, p) in _playerInGameInfos)
         {
@@ -203,7 +218,6 @@ public class GameRoom: JobSerializer
         //Units
         foreach(var (_, units) in _playerUnit)
         {
-            // #TODO: 제거가능 테스트, 컴렉션 수정 중 열거 오류를 방지하기 위해 복사본 사용
             var unitsCopy = units.ToList();
             foreach (var unit in unitsCopy)
             {
@@ -218,7 +232,6 @@ public class GameRoom: JobSerializer
 		foreach(var (side, towers) in _playerTower)
         {
             var oppositeSide = PlayerSideHelper.GetOppositeSide(side);
-            // #TODO: 제거가능 테스트, 컴렉션 수정 중 열거 오류를 방지하기 위해 복사본 사용
             var towersCopy = towers.ToList();
             foreach (var tower in towersCopy)
             {
@@ -243,6 +256,7 @@ public class GameRoom: JobSerializer
     }
 
     private long _issuedUnitId;
+
     public long IssueUnitId() => _issuedUnitId++;
 
     public void Broadcast(byte[] stream)
@@ -318,5 +332,21 @@ public class GameRoom: JobSerializer
         var playerInfo = _playerInGameInfos[playerSide];
         var hands = playerInfo.Hand;
         return hands.Any(card => card.UnitType == unitType);
+    }
+    
+    private void Reset()
+    {
+        _tempPlayerIds.Clear();
+        _playerUnit.Clear();
+        _playerTower.Clear();
+        _allUnits.Clear();
+        _playerInGameInfos.Clear();
+        _wayPoints.Clear();
+        Array.Fill(_playerSideIds, INVALID_PLAYER_ID_VALUE);
+        _roomState = ERoomState.Waiting;
+        _gameStartTime = 0;
+        _issuedUnitId = 0;
+        
+        Console.WriteLine($"GameRoom {RoomId} has been reset");
     }
 }

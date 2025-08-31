@@ -29,8 +29,6 @@ public class Managers : MonoBehaviour
     {
         if (s_instance == null)
         {
-            Debug.Log("Manager Initialize!");
-
             GameObject go = GameObject.Find("@Managers");
             if (go == null)
             {
@@ -43,6 +41,8 @@ public class Managers : MonoBehaviour
 
             s_instance._network.Init();
             //s_instance._pool.Init();
+
+            Debug.Log("Manager Initialized!");
         }
     }
 

@@ -9,21 +9,17 @@ public sealed class PlayerManager
     private readonly List<Player> _players = [];
     private readonly Lock _lock = new();
     
-    // ReSharper disable once InconsistentNaming
-    private static long LAST_PLAYER_ID = 1;
-    
-    public Player AddPlayer(ClientSession session)
+    public Player AddPlayer(ClientSession session, long playerId)
     {
         Player player;
         using (_lock.EnterScope())
         {
-            player = new Player(LAST_PLAYER_ID);
+            player = new Player(playerId);
             _players.Add(player);
         }
 
         player.Session = session;
-        ++LAST_PLAYER_ID;
-        return _players.Last();
+        return player;
     }
     
     public Player? GetPlayer(long playerId)

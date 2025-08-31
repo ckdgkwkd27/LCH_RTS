@@ -25,6 +25,7 @@ enum PACKET_ID : ushort {
     SC_GREET = 2,
     CS_LOGIN,
     SC_LOGIN,
+    CS_ENTER_GAME,
     SC_ENTER_GAME,
     CS_UNIT_SPAWN,
     SC_UNIT_SPAWN,
@@ -38,6 +39,7 @@ enum PACKET_ID : ushort {
     
     CM_MATCH_START,
     MC_MATCH_JOIN_INFO,
+    MC_PLAYER_REGISTERED,
     
     MG_GAME_READY,
     
@@ -54,7 +56,12 @@ table SC_GREET {
 }
 
 table SC_LOGIN {
+    room_id: int64;
+}
+
+table CS_ENTER_GAME {
     player_id: int64;
+    room_id: int64;
 }
 
 table SC_ENTER_GAME {
@@ -115,17 +122,22 @@ table SC_PLAYER_HAND_UPDATE {
     player_hands: [CardInfo];
 }
 
+//Match-Client
 table CM_MATCH_START {
-    player_id: int64;
-    player_mmr: int32;
 }
 
 table MC_MATCH_JOIN_INFO {
+    player_id: int64;
     match_id: int64;
     ip: string;
     port: int32;
 }
 
+table MC_PLAYER_REGISTERED {
+    player_id: int64;
+}
+
+//Match-Game
 table MG_GAME_READY {
     match_id: int64;
     player_id_1: int64;

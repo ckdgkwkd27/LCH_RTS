@@ -12,6 +12,30 @@ public abstract class PacketHandler
         var packet = CS_GREET.GetRootAsCS_GREET(new ByteBuffer(buffer.Array, buffer.Offset));
         Console.WriteLine($"CS_GREET : {packet.Data}");
     }
+    
+    public static void CS_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = CS_ENTER_GAME.GetRootAsCS_ENTER_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
+        
+        var player = PlayerManager.Instance.AddPlayer((session as ClientSession)!, packet.PlayerId);
+        var room = GameRoomManager.Instance.GetRoom(packet.RoomId);
+        if(room is null) return;
+        
+        var deck = new PlayerDeck();
+        deck.MakeTestDeck();
+        var hands = deck.ShuffleAndTake(PlayerDeck.MAX_CARD_LIST);
+        
+        room.Push(room.AddPlayer, player, deck, hands);
+        //var playerSide = room.AddPlayer(player, deck, hands);
+        // if (EPlayerSide.Max == playerSide)
+        // {
+        //     Console.WriteLine($"[ERROR] wrong playerSide PlayerId={packet.PlayerId}");
+        //     return;
+        // }
+        
+        //session.Send(PacketUtil.SC_ENTER_GAME_PACKET(packet.RoomId, room.GetPlayerId(playerSide), (byte)playerSide, 0, CardUtil.ConvertToCardInfos(hands).ToArray()));
+        room.Push(room.GameReady);
+    }
 
     public static void CS_UNIT_SPAWN_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
@@ -88,14 +112,16 @@ public abstract class PacketHandler
     {
         var packet = MG_GAME_READY.GetRootAsMG_GAME_READY(new ByteBuffer(buffer.Array, buffer.Offset));
         var matchId = packet.MatchId;
-        var room = GameRoomManager.Instance.GetRoom(matchId);
-        if (room is null)
+        if (GameRoomManager.Instance.GetRoom(matchId) != null)
         {
-            Console.WriteLine($"[MG_GAME_READY] Find Room Failed");
+            Console.WriteLine($"[MG_GAME_READY] Already Exist Room");
             return;
         }
 
-        room.AddPlayers(packet.PlayerId1, packet.PlayerId2);
+        var room = new GameRoom(matchId);
+        GameRoomManager.Instance.Add(room);
+
+        room.Push(room.AddPlayers, packet.PlayerId1, packet.PlayerId2);
         Console.WriteLine($"[MG_GAME_READY] GameRoom {matchId} created for match {matchId} with players: {packet.PlayerId1}, {packet.PlayerId2}");
     }
 }

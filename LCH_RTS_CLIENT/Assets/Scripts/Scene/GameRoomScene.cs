@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GameRoomScene : MonoBehaviour
 {
-    public void Init(long roomId, long playerId, EPlayerSide playerSide, int currCost, int maxCost, List<Card> playerHands, ServerSession session)
+    public void Init(long roomId, long playerId, EPlayerSide playerSide, int currCost, int maxCost, List<Card> playerHands, GameSession session)
     {
         Managers.Object.Clear();
 
