@@ -100,7 +100,6 @@ public static class PacketUtil
         return stream;
     }
 
-    //#TODO: Attack을 클라가 먼저하고 서버는 판정을 하는 방식으로 바꾼다.
     public static byte[] SC_UNIT_ATTACK_PACKET(long roomId, long attackerId, long victimId, int remainHp)
     {
         var builder = new FlatBufferBuilder(1024);

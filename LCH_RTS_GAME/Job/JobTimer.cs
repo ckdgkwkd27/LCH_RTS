@@ -13,7 +13,6 @@ internal struct JobTimerElem : IComparable<JobTimerElem>
 
 public class JobTimer
 {
-    //#TODO: 여기를 커스텀한 PQ로 변경 고려
     private readonly PriorityQueue<JobTimerElem, int> _pq = new();
     private readonly Lock _lock = new();
 

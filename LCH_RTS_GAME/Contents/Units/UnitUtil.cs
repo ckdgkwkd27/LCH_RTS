@@ -96,7 +96,7 @@ public abstract class UnitUtil
         {
             case 1: //Cube
                 attack = 10;
-                maxHp = currHp = 300;
+                maxHp = currHp = 100;
                 speed = 2.0f;
                 cost = 1;
                 attackRange = 10.0f;
@@ -118,10 +118,11 @@ public abstract class UnitUtil
                 break;
             case 4: //Sphere
                 attack = 20;
-                maxHp = currHp = 300;
+                maxHp = currHp = 150;
                 speed = 3.0f;
                 cost = 2;
                 attackRange = 3.0f;
+                sight = 8.0f;
                 break;
             case 5: //Cylinder
                 attack = 15;
@@ -129,6 +130,7 @@ public abstract class UnitUtil
                 speed = 4.0f;
                 cost = 3;
                 attackRange = 10.0f;
+                sight = 8.0f;
                 break;
             default:
                 Environment.Exit(1);
