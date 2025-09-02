@@ -26,14 +26,6 @@ public abstract class PacketHandler
         var hands = deck.ShuffleAndTake(PlayerDeck.MAX_CARD_LIST);
         
         room.Push(room.AddPlayer, player, deck, hands);
-        //var playerSide = room.AddPlayer(player, deck, hands);
-        // if (EPlayerSide.Max == playerSide)
-        // {
-        //     Console.WriteLine($"[ERROR] wrong playerSide PlayerId={packet.PlayerId}");
-        //     return;
-        // }
-        
-        //session.Send(PacketUtil.SC_ENTER_GAME_PACKET(packet.RoomId, room.GetPlayerId(playerSide), (byte)playerSide, 0, CardUtil.ConvertToCardInfos(hands).ToArray()));
         room.Push(room.GameReady);
     }
 

@@ -33,14 +33,10 @@ public class JobSerializer
     public void Flush()
     {
         _timer.Flush();
-
         while (true)
         {
             var job = Pop();
-            if (job == null)
-                return;
-
-            job.Execute();
+            job?.Execute();
         }
     }
 

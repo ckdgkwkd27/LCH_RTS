@@ -68,8 +68,8 @@ public class GameRoom: JobSerializer
             new WayPoint(new Vector2(34f, 0f), 1),
             new WayPoint(new Vector2(-13.5f, 0f), 1),
             
-            new WayPoint(new Vector2(9.9f, 34.8f), 2),
-            new WayPoint(new Vector2(9.9f, -5.0f), 2)
+            new WayPoint(new Vector2(9.9f, 34.8f - 5.0f), 2),
+            new WayPoint(new Vector2(9.9f, -5.0f + 5.0f), 2)
         ];
 
         foreach (var (playerSide, towers) in _playerTower)

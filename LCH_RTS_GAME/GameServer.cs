@@ -9,21 +9,27 @@ namespace LCH_RTS;
 
 internal abstract class Program
 {
+    private const int MaxRoomCount = 10;
+    private static readonly int MaxThreadCount = Environment.ProcessorCount / 2;
+
     private static void NetworkThread()
     {
         while (true)
         {
-            GameServerSessionManager.ForEach((session) => session.FlushSend());
+            GameServerSessionManager.ForEach(session => session.FlushSend());
             Thread.Sleep(0);
         }
     }
 
-    private static void GameRoomThread()
+    private static void GameRoomThread(int threadIdx)
     {
         while (true)
         {
-            GameRoomManager.Instance.Update();
-            Thread.Sleep(0);
+            for(var i = threadIdx; i < MaxRoomCount; i += MaxThreadCount)
+            {
+                GameRoomManager.Instance.Update(i);
+                Thread.Sleep(0);
+            }
         }
     }
     
@@ -32,7 +38,6 @@ internal abstract class Program
         var host = Dns.GetHostName();
         var ipHost = Dns.GetHostEntry(host);
         
-        // VPN 주소를 제외하고 실제 로컬 네트워크 IPv4 주소 찾기
         var ipAddr = ipHost.AddressList
             .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
             .Where(addr => !IPAddress.IsLoopback(addr))
@@ -51,22 +56,25 @@ internal abstract class Program
         var acceptor = new Acceptor();
         acceptor.Init(endPoint, () => new ClientSession(), 100, 100);
         
-        GameRoomManager.Instance.Init(10);
+        GameRoomManager.Instance.Init(MaxRoomCount);
 
         //Networking
+        for(var i = 0; i < MaxThreadCount; i++)
         {
             var t = new Thread(NetworkThread)
             {
-                Name = "Network Send"
+                Name = $"Network Thread{i}"
             };
             t.Start();
         }
         
         //GameRoom
+        for(var i = 0; i < MaxThreadCount; i++)
         {
-            var t = new Thread(GameRoomThread)
+            var i1 = i;
+            var t = new Thread(() => GameRoomThread(i1))
             {
-                Name = "Game Room"
+                Name = $"GameRoom Thread{i1}"
             };
             t.Start();
         }

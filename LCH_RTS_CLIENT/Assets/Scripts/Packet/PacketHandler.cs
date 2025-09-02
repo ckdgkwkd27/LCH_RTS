@@ -4,8 +4,6 @@ using System.Net;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-//FlatBuffer 데이터는 주소값을 참조하는 방식이기 때문에 값 타입으로 가져와야 메인쓰레드에서 해제로 인한 문제가 생기지 않는다.
-
 public class PacketHandler
 {
     public static void SC_LOGIN_Handler(PacketSession session, ArraySegment<byte> buffer)

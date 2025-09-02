@@ -13,7 +13,6 @@ public static class GameServerSessionManager
     {
         using (Lock.EnterScope())
         {
-            // null이 아닌 세션들만 복사해서 처리
             var validSessions = AllSessions.Where(s => true).ToList();
             
             foreach (var session in validSessions)

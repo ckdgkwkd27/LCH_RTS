@@ -55,4 +55,13 @@ public sealed class GameRoomManager
             }
         }
     }
+
+    public void Update(long roomId)
+    {
+        using (_lock.EnterScope())
+        {
+            var gameRoom = GetRoom(roomId);
+            gameRoom?.Flush();
+        }
+    }
 }
