@@ -11,7 +11,6 @@ internal class Program
     {
         while (true)
         {
-            //SessionManager.ForEach((session) => session.FlushSend());
             MatchingServerSessionManager.ForEach((session) => session.FlushSend());
             Thread.Sleep(0);
         }

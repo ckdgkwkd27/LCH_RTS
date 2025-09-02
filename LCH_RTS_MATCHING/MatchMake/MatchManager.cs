@@ -57,11 +57,9 @@ public class MatchManager
 
             while (_matchQueue.Count >= 2)
             {
-                // 큐에 2명 이상의 플레이어가 있을 때만 매칭 시도
                 var firstPlayer = _matchQueue.Peek();
                 _matchQueue.Dequeue();
 
-                // 현재 윈도우 내에서 매칭 가능한 두 번째 플레이어를 찾음
                 MatcherInfo? matchedPlayer = null;
                 var tempQueue = new Queue<MatcherInfo>();
 
@@ -69,7 +67,6 @@ public class MatchManager
                 {
                     var player2 = _matchQueue.Dequeue();
 
-                    // MMR 차이가 현재 윈도우 이내인지 확인
                     if (Math.Abs(firstPlayer.Mmr - player2.Mmr) <= currentWindow)
                     {
                         matchedPlayer = player2;
@@ -77,21 +74,17 @@ public class MatchManager
                     }
                     else
                     {
-                        // 매칭되지 않은 플레이어는 임시 큐에 저장
                         tempQueue.Enqueue(player2);
                     }
                 }
 
-                // 매칭된 플레이어가 있으면 결과에 추가
                 if (matchedPlayer.HasValue)
                 {
-                    // 임시 큐에 저장된 나머지 플레이어들을 원래 큐로 복사
                     while (tempQueue.Count > 0)
                     {
                         _matchQueue.Enqueue(tempQueue.Dequeue());
                     }
 
-                    // 매칭 성공 시 윈도우를 초기값으로 리셋
                     currentWindow = initialWindow;
 
                     results.Add((firstPlayer, matchedPlayer.Value));
@@ -110,16 +103,13 @@ public class MatchManager
                 }
                 else
                 {
-                    // 매칭되지 않은 플레이어를 다시 큐에 추가
                     _matchQueue.Enqueue(firstPlayer);
 
-                    // 임시 큐에 저장된 나머지 플레이어들을 원래 큐로 복사
                     while (tempQueue.Count > 0)
                     {
                         _matchQueue.Enqueue(tempQueue.Dequeue());
                     }
 
-                    // 더 이상 현재 윈도우에서 매칭할 수 없으면 윈도우를 확장
                     currentWindow += 100;
                     break;
                 }
