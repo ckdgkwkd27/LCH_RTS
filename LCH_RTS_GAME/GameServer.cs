@@ -86,7 +86,6 @@ internal abstract class Program
             var matchingHost = Dns.GetHostName();
             var matchingIpHost = Dns.GetHostEntry(matchingHost);
             
-            // 매칭 서버도 동일한 로직 적용
             var matchingIpAddr = matchingIpHost.AddressList[0];
             const int matchingPort = 8002;
             var matchingEndPoint = new IPEndPoint(matchingIpAddr, matchingPort);

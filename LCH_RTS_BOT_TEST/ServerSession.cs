@@ -14,7 +14,6 @@ public class ServerSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     {
         Console.WriteLine($"OnConnected : {endPoint}");
-        Send(PacketUtil.CS_GREET_PACKET("What is this"));
     }
 
     public override void OnDisconnected(EndPoint endPoint)
