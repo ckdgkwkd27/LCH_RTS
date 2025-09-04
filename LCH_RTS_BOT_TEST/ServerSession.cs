@@ -6,6 +6,7 @@ namespace LCH_RTS_BOT_TEST;
 
 public class ServerSession : PacketSession
 {
+    private GameSession _gameSession;
     public override void OnRecvPacket(ArraySegment<byte> buffer)
     {
         
@@ -13,12 +14,14 @@ public class ServerSession : PacketSession
     
     public override void OnConnected(EndPoint endPoint)
     {
+        Send(PacketUtil.CM_MATCH_START_Packet());
         Console.WriteLine($"OnConnected : {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
         Console.WriteLine($"OnDisconnected : {endPoint}");
+        BotSessionManager.Instance.RemoveMatchingSession(this);
     }
 
     public override void OnSend(int numOfBytes)

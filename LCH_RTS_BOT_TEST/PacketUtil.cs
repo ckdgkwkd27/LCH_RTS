@@ -1,5 +1,6 @@
 using Google.FlatBuffers;
 using System;
+using System.Numerics;
 
 namespace LCH_RTS_BOT_TEST;
 
@@ -21,13 +22,30 @@ public class PacketUtil
         Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
         return stream;
     }
+    
+    public static byte[] CS_LOGIN_Packet(long playerId, long matchId)
+    {
+        var builder = new FlatBufferBuilder(1024);
 
+        CS_LOGIN.StartCS_LOGIN(builder);
+        CS_LOGIN.AddPlayerId(builder, playerId);
+        CS_LOGIN.AddMatchId(builder, matchId);
+        var offset = CS_LOGIN.EndCS_LOGIN(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.CS_LOGIN), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
 
     public static byte[] CS_UNIT_SPAWN_Packet(long roomId, int unitType, Vector2 pos)
     {
         var builder = new FlatBufferBuilder(1024);
 
-        var vecOffset = Vec2.CreateVec2(builder, pos.x, pos.y);
+        var vecOffset = Vec2.CreateVec2(builder, pos.X, pos.Y);
 
         CS_UNIT_SPAWN.StartCS_UNIT_SPAWN(builder);
         CS_UNIT_SPAWN.AddRoomId(builder, roomId);

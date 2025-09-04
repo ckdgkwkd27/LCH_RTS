@@ -25,7 +25,9 @@ internal abstract class Program
     {
         while (true)
         {
-            for(var i = threadIdx; i < MaxRoomCount; i += MaxThreadCount)
+            var i = threadIdx;
+            if(i >= MaxRoomCount) return;
+            for(; i < MaxRoomCount; i += MaxThreadCount)
             {
                 GameRoomManager.Instance.Update(i);
                 Thread.Sleep(0);
@@ -59,11 +61,10 @@ internal abstract class Program
         GameRoomManager.Instance.Init(MaxRoomCount);
 
         //Networking
-        for(var i = 0; i < MaxThreadCount; i++)
         {
             var t = new Thread(NetworkThread)
             {
-                Name = $"Network Thread{i}"
+                Name = "Network Thread"
             };
             t.Start();
         }
@@ -71,10 +72,10 @@ internal abstract class Program
         //GameRoom
         for(var i = 0; i < MaxThreadCount; i++)
         {
-            var i1 = i;
-            var t = new Thread(() => GameRoomThread(i1))
+            var threadIndex = i; 
+            var t = new Thread(() => GameRoomThread(threadIndex))
             {
-                Name = $"GameRoom Thread{i1}"
+                Name = $"GameRoom Thread{threadIndex}"
             };
             t.Start();
         }
@@ -97,6 +98,11 @@ internal abstract class Program
         catch (Exception ex)
         {
             Console.WriteLine($"[ERROR] Failed to connect to Matching Server: {ex.Message}");
+        }
+        
+        while (true)
+        {
+            Thread.Sleep(1000);
         }
     }
 

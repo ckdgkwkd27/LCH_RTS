@@ -12,12 +12,6 @@ public enum EPlayerSide
 
 namespace LCH_RTS.Contents.Units
 {
-    public struct Vec()
-    {
-        public float X = 0f;
-        public float Y = 0f;
-    }
-
     public enum EUnitStatus
     {
         Idle,
@@ -140,27 +134,6 @@ namespace LCH_RTS.Contents.Units
         protected virtual void OnDead(long roomId, EPlayerSide winnerSide, EPlayerSide loserSide)
         {
             
-        }
-        
-        public void SetPos(float x, float y)
-        {
-            var builder = new FlatBufferBuilder(1024);
-            var newPosOffset = Vec2.CreateVec2(builder, x, y);
-            builder.Finish(newPosOffset.Value);
-            var newPos = Vec2.GetRootAsVec2(builder.DataBuffer);
-            Pos = newPos;
-        }
-
-        public void SetDirection(float dirX, float dirY)
-        {
-            // 방향 벡터 정규화 (길이를 1로 만들어 속도에 영향을 주지 않도록 함)
-            var magnitude = (float)Math.Sqrt(dirX * dirX + dirY * dirY);
-            if (magnitude > 0)
-            {
-            }
-            else
-            {
-            }
         }
     }
 }

@@ -1,6 +1,8 @@
 using Google.FlatBuffers;
 using System;
+using System.Diagnostics;
 using System.Net;
+using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
 
@@ -10,15 +12,14 @@ public class PacketHandler
     {
         var packet = SC_LOGIN.GetRootAsSC_LOGIN(new ByteBuffer(buffer.Array, buffer.Offset));
         var roomId = packet.RoomId;
-        (session as GameSession).RoomId = roomId;
+        if (session is not GameSession gs) return;
+        gs.RoomId = roomId;
         session.Send(PacketUtil.CS_ENTER_GAME_Packet(PlayerId.Value, roomId));
     }
 
     public static void SC_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = SC_ENTER_GAME.GetRootAsSC_ENTER_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
-        tempPacket = packet;
-
         var gs = session as GameSession;
         gs.PlayerId = packet.PlayerId;
     }
@@ -27,7 +28,6 @@ public class PacketHandler
     {
         var packet = SC_UNIT_SPAWN.GetRootAsSC_UNIT_SPAWN(new ByteBuffer(buffer.Array, buffer.Offset));
         var gs = session as GameSession;
-        Console.WriteLine($"RoomId={packet.RoomId}, UnitType={packet.UnitType} UnitRemoved");
     }
 
     public static void SC_UNIT_MOVE_Handler(PacketSession session, ArraySegment<byte> buffer)
@@ -61,10 +61,10 @@ public class PacketHandler
     {
         var packet = MC_MATCH_JOIN_INFO.GetRootAsMC_MATCH_JOIN_INFO(new ByteBuffer(buffer.Array, buffer.Offset));
 
-        Debug.Log($"IP={packet.Ip}, Port={packet.Port}");
+        Console.WriteLine($"IP={packet.Ip}, Port={packet.Port}");
         var endPoint = new IPEndPoint(IPAddress.Parse(packet.Ip), packet.Port);
-        Connector connector = new Connector();
-        connector.Connect(endPoint, () => new GameSession());
+        var connector = new Connector();
+        connector.Connect(endPoint, () => BotSessionManager.Instance.GenerateGame());
     }
 
     public static long? PlayerId;
@@ -73,8 +73,6 @@ public class PacketHandler
         var packet = MC_PLAYER_REGISTERED.GetRootAsMC_PLAYER_REGISTERED(new ByteBuffer(buffer.Array, buffer.Offset));
         var playerId = packet.PlayerId;
         var ss = session as ServerSession;
-        ss.PlayerId = playerId;
         PlayerId = packet.PlayerId;
-        Debug.Log($"PlayerRegistered PlayerId={ss.PlayerId}");
     }
 }

@@ -13,7 +13,6 @@ public static class MatchingServerSessionManager
     {
         using (Lock.EnterScope())
         {
-            // null이 아닌 세션들만 복사해서 처리
             var validSessions = AllSessions.Where(s => s != null).ToList();
             
             foreach (var session in validSessions)

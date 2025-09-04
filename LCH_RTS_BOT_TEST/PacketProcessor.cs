@@ -1,6 +1,8 @@
 using Google.FlatBuffers;
 using System.Collections.Generic;
 using System;
+using System.Diagnostics;
+using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
 public class PacketProcessor
@@ -57,7 +59,7 @@ public class PacketProcessor
         count += 2;
         if (buffer.Array.Length < size)
         {
-            Debug.LogError("[ERROR] Packet size is too small.");
+            Console.WriteLine("[ERROR] Packet size is too small.");
             return;
         }
 
@@ -66,7 +68,7 @@ public class PacketProcessor
 
         var bodyBuffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + count, buffer.Count - count);
         if (_deserializer.TryGetValue(id, out var handler))
-            PacketDispatcher.Instance.Enqueue(Tuple.Create(handler, session, bodyBuffer, id)); //handler
+            handler.Invoke(session, bodyBuffer, id);
     }
 
     private void MakePacket<T>(PacketSession session, ArraySegment<byte> buffer, PACKET_ID id) where T : IFlatbufferObject, new()

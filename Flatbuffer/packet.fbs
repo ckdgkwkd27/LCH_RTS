@@ -55,6 +55,11 @@ table SC_GREET {
     answer: string;
 }
 
+table CS_LOGIN {
+    player_id: int64;
+    match_id: int64;
+}
+
 table SC_LOGIN {
     room_id: int64;
 }

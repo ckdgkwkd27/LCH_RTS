@@ -295,6 +295,48 @@ static public class SC_GREETVerify
       && verifier.VerifyTableEnd(tablePos);
   }
 }
+public struct CS_LOGIN : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static CS_LOGIN GetRootAsCS_LOGIN(ByteBuffer _bb) { return GetRootAsCS_LOGIN(_bb, new CS_LOGIN()); }
+  public static CS_LOGIN GetRootAsCS_LOGIN(ByteBuffer _bb, CS_LOGIN obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public CS_LOGIN __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public long PlayerId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public long MatchId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+
+  public static Offset<CS_LOGIN> CreateCS_LOGIN(FlatBufferBuilder builder,
+      long player_id = 0,
+      long match_id = 0) {
+    builder.StartTable(2);
+    CS_LOGIN.AddMatchId(builder, match_id);
+    CS_LOGIN.AddPlayerId(builder, player_id);
+    return CS_LOGIN.EndCS_LOGIN(builder);
+  }
+
+  public static void StartCS_LOGIN(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void AddPlayerId(FlatBufferBuilder builder, long playerId) { builder.AddLong(0, playerId, 0); }
+  public static void AddMatchId(FlatBufferBuilder builder, long matchId) { builder.AddLong(1, matchId, 0); }
+  public static Offset<CS_LOGIN> EndCS_LOGIN(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<CS_LOGIN>(o);
+  }
+}
+
+
+static public class CS_LOGINVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*PlayerId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 6 /*MatchId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
 public struct SC_LOGIN : IFlatbufferObject
 {
   private Table __p;

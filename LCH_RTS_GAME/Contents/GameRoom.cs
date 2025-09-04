@@ -30,12 +30,12 @@ public class GameRoom: JobSerializer
     private readonly Dictionary<EPlayerSide, PlayerInGameInfo> _playerInGameInfos = new();
     
     private List<WayPoint> _wayPoints = [];
-    private GameRoomStatus _roomStatus; // FSM으로 변경
+    private GameRoomStatus _roomStatus;
     
     public GameRoom(long roomId)
     {
         RoomId = roomId;
-        _roomStatus = new GameRoomStatus(this); // FSM 초기화
+        _roomStatus = new GameRoomStatus(this);
     }
 
     public void GameStart()
@@ -89,7 +89,6 @@ public class GameRoom: JobSerializer
         });
         
         _roomStatus.ChangeState(ERoomState.Start);
-        // PushAfter(1000, Update); // 중복 제거: Update는 GameReady()에서 이미 스케줄링됨
     }
 
     // ReSharper disable once InconsistentNaming

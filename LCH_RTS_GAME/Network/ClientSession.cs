@@ -23,7 +23,6 @@ public class ClientSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     { 
         GameServerSessionManager.AddSession(this);
-        Send(PacketUtil.SC_LOGIN_PACKET());
         Console.WriteLine($"OnConnected : {endPoint}");
     }
     

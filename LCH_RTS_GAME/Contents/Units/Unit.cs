@@ -51,15 +51,12 @@ public class Unit : UnitBase
             }
         }
 
-        // 팀별로 적절한 waypoint만 선택하도록 필터링
         if (PlayerSide == EPlayerSide.Blue)
         {
-            // Blue 팀: Y < 10f인 waypoint만 선택 (Red 타워들)
             candidates = candidates.Where(wp => wp.Pos.Y < 10f).ToList();
         }
         else
         {
-            // Red 팀: Y > 20f인 waypoint만 선택 (Blue 타워들)
             candidates = candidates.Where(wp => wp.Pos.Y > 20f).ToList();
         }
 
@@ -92,7 +89,6 @@ public class Unit : UnitBase
 
     protected override void UpdateChase()
     {
-        //WayPoint Pass Check를 해야할듯
         if (Target is null)
         {
             Status = EUnitStatus.Moving;
@@ -119,7 +115,6 @@ public class Unit : UnitBase
         }
         IncPos(dirX * Stat.Speed, dirY * Stat.Speed);
 
-        //Waypoint Pass Check
         {
             var waypoints = gameRoom.GetWayPoints();
             var candidates = waypoints.Where(wp => _currentLevel == wp.Level).ToList();

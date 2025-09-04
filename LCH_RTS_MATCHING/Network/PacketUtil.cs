@@ -31,7 +31,7 @@ public static class PacketUtil
         var ipOffset = builder.CreateString(ip);
         
         MC_MATCH_JOIN_INFO.StartMC_MATCH_JOIN_INFO(builder);
-        MC_MATCH_JOIN_INFO.AddMatchId(builder, playerId);
+        MC_MATCH_JOIN_INFO.AddPlayerId(builder, playerId);
         MC_MATCH_JOIN_INFO.AddMatchId(builder, matchId);
         MC_MATCH_JOIN_INFO.AddIp(builder, ipOffset);
         MC_MATCH_JOIN_INFO.AddPort(builder, port);

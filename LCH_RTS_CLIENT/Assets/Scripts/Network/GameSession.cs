@@ -8,11 +8,13 @@ public class GameSession : PacketSession
 
     public override void OnRecvPacket(ArraySegment<byte> buffer)
     {
+        Debug.LogWarning("GameSession Recv!");
         PacketProcessor.Instance.OnRecvPacket(this, buffer);
     }
 
     public override void OnConnected(EndPoint endPoint)
     {
+        Send(PacketUtil.CS_LOGIN_Packet(Util.PlayerId, Util.MatchId));
         Debug.Log($"[GameServer OnConnected] {endPoint.ToString()}");
     }
 

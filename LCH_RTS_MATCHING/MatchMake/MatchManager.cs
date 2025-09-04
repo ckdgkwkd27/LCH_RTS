@@ -25,7 +25,7 @@ public class MatchManager
     private readonly Queue<MatcherInfo> _matchQueue = new();
     private int _matchWindow = 100;
     private long _lastMatchTriedSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-    private long _currMatchId;
+    private long _currMatchId = 1;
     private readonly Lock _lock = new();
     
     public void Enqueue(MatcherInfo info)
@@ -93,7 +93,7 @@ public class MatchManager
 
                     var ip = NetConfig.Ip;
                     var port = NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT);
-                    Console.WriteLine($"[INFO] Sending GameServer address to clients: {ip}:{port}");
+                    Console.WriteLine($"[INFO] MatchId={resultMatchId}, Sent EndPoint: {ip}:{port}");
 
                     var firstPlayerId = (firstPlayer.Session as ClientSession)!.PlayerId;
                     firstPlayer.Session.Send(PacketUtil.MC_MATCH_JOIN_INFO_PACKET(firstPlayerId, resultMatchId, ip, port));

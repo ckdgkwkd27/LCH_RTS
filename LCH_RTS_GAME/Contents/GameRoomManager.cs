@@ -39,10 +39,7 @@ public sealed class GameRoomManager
 
     public GameRoom? GetRoom(long roomId)
     {
-        using(_lock.EnterScope())
-        {
-            return _rooms.FirstOrDefault(r => r.RoomId == roomId) ?? null;
-        }
+        return _rooms.FirstOrDefault(r => r.RoomId == roomId) ?? null;
     }
     
     public void Update()

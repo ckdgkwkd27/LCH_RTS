@@ -12,6 +12,13 @@ public abstract class PacketHandler
         var packet = CS_GREET.GetRootAsCS_GREET(new ByteBuffer(buffer.Array, buffer.Offset));
         Console.WriteLine($"CS_GREET : {packet.Data}");
     }
+
+    public static void CS_LOGIN_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = CS_LOGIN.GetRootAsCS_LOGIN(new ByteBuffer(buffer.Array, buffer.Offset));
+        session.Send(PacketUtil.SC_LOGIN_PACKET(packet.MatchId));
+        Console.WriteLine($"LOGIN: {packet.PlayerId}");
+    }
     
     public static void CS_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
@@ -104,14 +111,12 @@ public abstract class PacketHandler
     {
         var packet = MG_GAME_READY.GetRootAsMG_GAME_READY(new ByteBuffer(buffer.Array, buffer.Offset));
         var matchId = packet.MatchId;
-        if (GameRoomManager.Instance.GetRoom(matchId) != null)
+        var room = GameRoomManager.Instance.GetRoom(matchId);
+        if (room is null)
         {
-            Console.WriteLine($"[MG_GAME_READY] Already Exist Room");
-            return;
+            room = new GameRoom(matchId);
+            GameRoomManager.Instance.Add(room);
         }
-
-        var room = new GameRoom(matchId);
-        GameRoomManager.Instance.Add(room);
 
         room.Push(room.AddPlayers, packet.PlayerId1, packet.PlayerId2);
         Console.WriteLine($"[MG_GAME_READY] GameRoom {matchId} created for match {matchId} with players: {packet.PlayerId1}, {packet.PlayerId2}");

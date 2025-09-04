@@ -1,4 +1,5 @@
 using Google.FlatBuffers;
+using JetBrains.Annotations;
 using System;
 using UnityEngine;
 
@@ -21,6 +22,23 @@ public class PacketUtil
         return stream;
     }
 
+    public static byte[] CS_LOGIN_Packet(long playerId, long matchId)
+    {
+        var builder = new FlatBufferBuilder(1024);
+
+        CS_LOGIN.StartCS_LOGIN(builder);
+        CS_LOGIN.AddPlayerId(builder, playerId);
+        CS_LOGIN.AddMatchId(builder, matchId);
+        var offset = CS_LOGIN.EndCS_LOGIN(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.CS_LOGIN), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
 
     public static byte[] CS_UNIT_SPAWN_Packet(long roomId, int unitType, Vector2 pos)
     {

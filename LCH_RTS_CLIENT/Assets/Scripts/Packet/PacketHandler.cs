@@ -10,7 +10,7 @@ public class PacketHandler
     {
         var packet = SC_LOGIN.GetRootAsSC_LOGIN(new ByteBuffer(buffer.Array, buffer.Offset));
         var roomId = packet.RoomId;
-        session.Send(PacketUtil.CS_ENTER_GAME_Packet(PlayerId.Value, roomId));
+        session.Send(PacketUtil.CS_ENTER_GAME_Packet(Util.PlayerId, roomId));
     }
 
     public static void SC_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer) 
@@ -200,21 +200,19 @@ public class PacketHandler
     public static void MC_MATCH_JOIN_INFO_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = MC_MATCH_JOIN_INFO.GetRootAsMC_MATCH_JOIN_INFO(new ByteBuffer(buffer.Array, buffer.Offset));
-
         Debug.Log($"IP={packet.Ip}, Port={packet.Port}");
+        Util.MatchId = packet.MatchId;
         var endPoint = new IPEndPoint(IPAddress.Parse(packet.Ip), packet.Port);
         Connector connector = new Connector();
         connector.Connect(endPoint, () => new GameSession());
     }
 
-    public static long? PlayerId;
     public static void MC_PLAYER_REGISTERED_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = MC_PLAYER_REGISTERED.GetRootAsMC_PLAYER_REGISTERED(new ByteBuffer(buffer.Array, buffer.Offset));
         var playerId = packet.PlayerId;
         var ss = session as ServerSession;
-        ss.PlayerId = playerId;
-        PlayerId = packet.PlayerId;
+        Util.PlayerId = ss.PlayerId = playerId;
         Debug.Log($"PlayerRegistered PlayerId={ss.PlayerId}");
     }
 }

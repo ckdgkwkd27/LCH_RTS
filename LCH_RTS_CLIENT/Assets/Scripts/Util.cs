@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class Util
 {
+    public static long PlayerId { get; set; }
+    public static long MatchId { get; set; }
+
     public static T GetOrAddComponent<T>(GameObject go) where T : UnityEngine.Component
     {
         T component = go.GetComponent<T>();
