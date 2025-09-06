@@ -24,7 +24,7 @@ public class MatchManager
 
     private readonly Queue<MatcherInfo> _matchQueue = new();
     private int _matchWindow = 100;
-    private long _lastMatchTriedSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    private long _lastMatchTriedMSec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     private long _currMatchId = 1;
     private readonly Lock _lock = new();
     
@@ -36,22 +36,21 @@ public class MatchManager
         }
     }
 
-    private const int MATCH_INTERVAL = 3;
-    public List<(MatcherInfo, MatcherInfo)>? ProcessMatching()
+    private const int MATCH_INTERVAL_MSEC = 100;
+    public void ProcessMatching()
     {
-        if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - _lastMatchTriedSecond < MATCH_INTERVAL)
+        if (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _lastMatchTriedMSec < MATCH_INTERVAL_MSEC)
         {
-            return null;
+            return;
         }
 
         using (_lock.EnterScope())
         {
             if (_matchQueue.Count < 2)
             {
-                return null;
+                return;
             }
 
-            var results = new List<(MatcherInfo, MatcherInfo)>();
             var initialWindow = _matchWindow;
             var currentWindow = _matchWindow;
 
@@ -72,10 +71,7 @@ public class MatchManager
                         matchedPlayer = player2;
                         break;
                     }
-                    else
-                    {
-                        tempQueue.Enqueue(player2);
-                    }
+                    tempQueue.Enqueue(player2);
                 }
 
                 if (matchedPlayer.HasValue)
@@ -87,7 +83,6 @@ public class MatchManager
 
                     currentWindow = initialWindow;
 
-                    results.Add((firstPlayer, matchedPlayer.Value));
                     var resultMatchId = _currMatchId++;
                     GameSession.GameServer?.Send(PacketUtil.MG_GAME_READY_PACKET(resultMatchId, firstPlayer.PlayerId, matchedPlayer.Value.PlayerId));
 
@@ -116,8 +111,7 @@ public class MatchManager
             }
 
             _matchWindow = currentWindow;
-            _lastMatchTriedSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            return results.Count > 0 ? results : null;
+            _lastMatchTriedMSec = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
     }
 }

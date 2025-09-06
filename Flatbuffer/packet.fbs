@@ -27,6 +27,7 @@ enum PACKET_ID : ushort {
     SC_LOGIN,
     CS_ENTER_GAME,
     SC_ENTER_GAME,
+    SC_START_GAME,
     CS_UNIT_SPAWN,
     SC_UNIT_SPAWN,
     SC_UNIT_MOVE,
@@ -75,6 +76,10 @@ table SC_ENTER_GAME {
     player_side: uint8;
     curr_cost: int32;
     player_hands: [CardInfo];
+}
+
+table SC_START_GAME {
+    
 }
 
 table CS_UNIT_SPAWN {

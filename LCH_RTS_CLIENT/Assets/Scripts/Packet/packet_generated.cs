@@ -14,20 +14,21 @@ public enum PACKET_ID : ushort
   SC_LOGIN = 4,
   CS_ENTER_GAME = 5,
   SC_ENTER_GAME = 6,
-  CS_UNIT_SPAWN = 7,
-  SC_UNIT_SPAWN = 8,
-  SC_UNIT_MOVE = 9,
-  SC_UNIT_ATTACK = 10,
-  SC_REMOVE_UNIT = 11,
-  SC_END_GAME = 12,
-  SC_ENTER_LOBBY = 13,
-  SC_PLAYER_COST_UPDATE = 14,
-  SC_PLAYER_HAND_UPDATE = 15,
-  CM_MATCH_START = 16,
-  MC_MATCH_JOIN_INFO = 17,
-  MC_PLAYER_REGISTERED = 18,
-  MG_GAME_READY = 19,
-  PACKET_MAX = 20,
+  SC_START_GAME = 7,
+  CS_UNIT_SPAWN = 8,
+  SC_UNIT_SPAWN = 9,
+  SC_UNIT_MOVE = 10,
+  SC_UNIT_ATTACK = 11,
+  SC_REMOVE_UNIT = 12,
+  SC_END_GAME = 13,
+  SC_ENTER_LOBBY = 14,
+  SC_PLAYER_COST_UPDATE = 15,
+  SC_PLAYER_HAND_UPDATE = 16,
+  CM_MATCH_START = 17,
+  MC_MATCH_JOIN_INFO = 18,
+  MC_PLAYER_REGISTERED = 19,
+  MG_GAME_READY = 20,
+  PACKET_MAX = 21,
 };
 
 public struct Vec2 : IFlatbufferObject
@@ -476,6 +477,33 @@ static public class SC_ENTER_GAMEVerify
       && verifier.VerifyField(tablePos, 8 /*PlayerSide*/, 1 /*byte*/, 1, false)
       && verifier.VerifyField(tablePos, 10 /*CurrCost*/, 4 /*int*/, 4, false)
       && verifier.VerifyVectorOfTables(tablePos, 12 /*PlayerHands*/, CardInfoVerify.Verify, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
+public struct SC_START_GAME : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static SC_START_GAME GetRootAsSC_START_GAME(ByteBuffer _bb) { return GetRootAsSC_START_GAME(_bb, new SC_START_GAME()); }
+  public static SC_START_GAME GetRootAsSC_START_GAME(ByteBuffer _bb, SC_START_GAME obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public SC_START_GAME __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+
+  public static void StartSC_START_GAME(FlatBufferBuilder builder) { builder.StartTable(0); }
+  public static Offset<SC_START_GAME> EndSC_START_GAME(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<SC_START_GAME>(o);
+  }
+}
+
+
+static public class SC_START_GAMEVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

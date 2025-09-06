@@ -90,6 +90,7 @@ namespace LCH_RTS.Contents
         public override void Enter()
         {
             Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Entered Start state - Game Started!");
+            _gameRoom.Broadcast(PacketUtil.SC_START_GAME_PACKET());
             _gameRoom.GameStart();
         }
 

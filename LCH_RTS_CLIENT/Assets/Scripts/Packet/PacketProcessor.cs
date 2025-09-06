@@ -20,6 +20,7 @@ public class PacketProcessor
         {
             _handler.Add(PACKET_ID.SC_LOGIN, PacketHandler.SC_LOGIN_Handler);
             _handler.Add(PACKET_ID.SC_ENTER_GAME, PacketHandler.SC_ENTER_GAME_Handler);
+            _handler.Add(PACKET_ID.SC_START_GAME, PacketHandler.SC_START_GAME_Handler);
             _handler.Add(PACKET_ID.SC_UNIT_SPAWN, PacketHandler.SC_UNIT_SPAWN_Handler);
             _handler.Add(PACKET_ID.SC_UNIT_MOVE, PacketHandler.SC_UNIT_MOVE_Handler);
             _handler.Add(PACKET_ID.SC_UNIT_ATTACK, PacketHandler.SC_UNIT_ATTACK_Handler);
@@ -35,6 +36,7 @@ public class PacketProcessor
         {
             _deserializer.Add(PACKET_ID.SC_LOGIN, MakePacket<SC_LOGIN>);
             _deserializer.Add(PACKET_ID.SC_ENTER_GAME, MakePacket<SC_ENTER_GAME>);
+            _deserializer.Add(PACKET_ID.SC_START_GAME, MakePacket<SC_START_GAME>);
             _deserializer.Add(PACKET_ID.SC_UNIT_SPAWN, MakePacket<SC_UNIT_SPAWN>);
             _deserializer.Add(PACKET_ID.SC_UNIT_MOVE, MakePacket<SC_UNIT_MOVE>);
             _deserializer.Add(PACKET_ID.SC_UNIT_ATTACK, MakePacket<SC_UNIT_ATTACK>);

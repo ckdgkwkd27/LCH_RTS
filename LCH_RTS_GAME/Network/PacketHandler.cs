@@ -98,13 +98,21 @@ public abstract class PacketHandler
             return;
         }
 
-        room.AddUnit(unitId, playerSide, packet.CreatePos.Value, unitStat, packet.UnitType); 
-        room.Broadcast(PacketUtil.SC_UNIT_SPAWN_PACKET(unitId, playerSide, packet.UnitType, packet.CreatePos.Value, unitStat));
-        
-        var remainCost = room.DecreaseCost(playerSide, unitStat.Cost);
-        session.Send(PacketUtil.SC_PLAYER_COST_UPDATE_PACKET(room.RoomId, remainCost));
+        var createPos = packet.CreatePos.Value;
+        var unitType = packet.UnitType;
+        var playerIdLong = player.PlayerId;
+        var playerSideLocal = playerSide;
+        var unitIdLocal = unitId;
+        var unitStatLocal = unitStat;
 
-        room.HandsUpdate(playerSide, player.PlayerId, packet.UnitType);
+        room.Push(() =>
+        {
+            room.AddUnit(unitIdLocal, playerSideLocal, createPos, unitStatLocal, unitType); 
+            room.Broadcast(PacketUtil.SC_UNIT_SPAWN_PACKET(unitIdLocal, playerSideLocal, unitType, createPos, unitStatLocal));
+            var remainCostLocal = room.DecreaseCost(playerSideLocal, unitStatLocal.Cost);
+            session.Send(PacketUtil.SC_PLAYER_COST_UPDATE_PACKET(room.RoomId, remainCostLocal));
+            room.HandsUpdate(playerSideLocal, playerIdLong, unitType);
+        });
     }
 
     public static void MG_GAME_READY_Handler(PacketSession session, ArraySegment<byte> buffer)

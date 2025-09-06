@@ -48,6 +48,11 @@ public class PacketHandler
         gs = null;
     }
 
+    public static void SC_START_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
+    {
+        var packet = SC_START_GAME.GetRootAsSC_START_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
+    }
+
     public static void SC_UNIT_SPAWN_Handler(PacketSession session, ArraySegment<byte> buffer) 
     {
         var packet = SC_UNIT_SPAWN.GetRootAsSC_UNIT_SPAWN(new ByteBuffer(buffer.Array, buffer.Offset));

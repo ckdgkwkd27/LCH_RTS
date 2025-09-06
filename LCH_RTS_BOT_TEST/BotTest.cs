@@ -6,13 +6,13 @@ using LCH_RTS_CORE_LIB.Network;
 
 static class Global
 {
-    public const int BotTestCnt = 2;
-    public static int ConnectedCnt = 0;
-    public static long LastSentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    public const int BotTestCnt = 5000;
+    public static int GameStartedCnt = 0;
+    public static long LastSentMsec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-    public static bool IsAllConnected()
+    public static bool IsAllGameStarted()
     {
-        return BotTestCnt == ConnectedCnt;
+        return BotTestCnt == GameStartedCnt;
     }
 }
 
@@ -20,6 +20,8 @@ internal class Program
 {
     public static void Main(string[] args)
     {
+        Thread.Sleep(3000);
+        
         var host = Dns.GetHostName();
         var ipHost = Dns.GetHostEntry(host);
         var ipAddr = ipHost.AddressList[0];
@@ -28,20 +30,19 @@ internal class Program
 
         var connector = new Connector();
         connector.Connect(matchingEndPoint, () => BotSessionManager.Instance.GenerateMatching(), Global.BotTestCnt);
-        Console.WriteLine($"Connecting to Matching Server at {matchingEndPoint}");
-
         /////////////////////////////////////////////////////////////////////
+         
         while (true)
         {
-            if (Global.IsAllConnected())
-            {
-                var nowSec = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                if (nowSec - Global.LastSentTime <= 1)
-                {
-                    BotSessionManager.Instance.ForEachSend();
-                    Global.LastSentTime = nowSec;
-                }
-            }
+            if (!Global.IsAllGameStarted()) 
+                continue;
+            
+            var nowMSec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (nowMSec - Global.LastSentMsec < 1000) 
+                continue;
+            
+            BotSessionManager.Instance.ForEachSend();
+            Global.LastSentMsec = nowMSec;
         }
     }
 }

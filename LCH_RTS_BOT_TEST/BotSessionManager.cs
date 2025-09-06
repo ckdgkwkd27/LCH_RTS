@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Collections.Generic;
 
 namespace LCH_RTS_BOT_TEST;
 
@@ -9,6 +10,7 @@ public class BotSessionManager
     private readonly HashSet<ServerSession> _sessions = new();
     private readonly HashSet<GameSession> _gameSessions = new();
     private readonly Lock _lock = new();
+    // roomId -> (side -> playerId)
 
     public ServerSession GenerateMatching()
     {
@@ -16,19 +18,20 @@ public class BotSessionManager
         {
             var session = new ServerSession();
             _sessions.Add(session);
-            Console.WriteLine($"Connected-Matching Total:({_sessions.Count}) Players");
+            Console.WriteLine($"Connected-Matching Total BotCount={_sessions.Count}");
             return session;
         }
     }
 
-    public GameSession GenerateGame()
+    public GameSession GenerateGame(long playerId, long matchId)
     {
         using(_lock.EnterScope())
         {
             var session = new GameSession();
+            session.PlayerId = playerId;
+            session.MatchId = matchId;
             _gameSessions.Add(session);
             Console.WriteLine($"Connected-Game Total:({_gameSessions.Count}) Players");
-            Global.ConnectedCnt++;
             return session;
         }
     }
@@ -50,7 +53,6 @@ public class BotSessionManager
         {
             if (_gameSessions.Remove(session))
             {
-                Global.ConnectedCnt--;
                 Console.WriteLine($"Disconnected-Game Total:({_gameSessions.Count}) Players");
             }
         }
@@ -58,6 +60,12 @@ public class BotSessionManager
 
     public void ForEachSend()
     {
-        _gameSessions.ToList().ForEach(ss => ss.Send(PacketUtil.CS_UNIT_SPAWN_Packet(ss.RoomId, unitType: 1, new Vector2(20, 30))));
+        _gameSessions.ToList().ForEach(ss =>
+        {
+            if (ss.RoomId != 0)
+            {
+                ss.Send(PacketUtil.CS_UNIT_SPAWN_Packet(ss.RoomId, unitType: 1, new Vector2(20, 30)));
+            }
+        });
     }
 }

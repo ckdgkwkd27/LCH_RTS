@@ -1,4 +1,5 @@
 using System.Net;
+using System.Collections.Generic;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
@@ -7,6 +8,8 @@ public class GameSession : PacketSession
 {
     public long PlayerId { get; set; }
     public long RoomId { get; set; }
+    public long MatchId { get; set; }
+    public byte PlayerSide { get; set; }
 
     public override void OnRecvPacket(ArraySegment<byte> buffer)
     {
@@ -15,12 +18,13 @@ public class GameSession : PacketSession
 
     public override void OnConnected(EndPoint endPoint)
     {
-        Console.WriteLine($"[GameServer OnConnected] {endPoint.ToString()}");
+        Send(PacketUtil.CS_LOGIN_Packet(PlayerId, MatchId));
+        Console.WriteLine($"OnConnected GameServer: {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
-        Console.WriteLine($"[OnDisconnected] {endPoint.ToString()}");
+        Console.WriteLine($"OnDisConnected GameServer: {endPoint}");
         BotSessionManager.Instance.RemoveGameSession(this);
     }
 

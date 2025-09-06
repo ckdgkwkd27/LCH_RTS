@@ -20,7 +20,7 @@ internal class Program
     {
         while (true)
         {
-            var matchers = MatchManager.Instance.ProcessMatching();
+            MatchManager.Instance.ProcessMatching();
             Thread.Sleep(0);
         }
     }

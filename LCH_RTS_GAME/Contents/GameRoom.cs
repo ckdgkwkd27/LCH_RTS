@@ -58,6 +58,9 @@ public class GameRoom: JobSerializer
 
         _allUnits = _playerTower.ToDictionary(pair => pair.Key, pair => pair.Value.Cast<UnitBase>().ToList());
 
+        if (!_playerUnit.ContainsKey(EPlayerSide.Blue)) _playerUnit[EPlayerSide.Blue] = [];
+        if (!_playerUnit.ContainsKey(EPlayerSide.Red)) _playerUnit[EPlayerSide.Red] = [];
+
         _wayPoints =
         [
             new WayPoint(new Vector2(31.8f, 10.2f), 0),
@@ -190,14 +193,20 @@ public class GameRoom: JobSerializer
     
     public void UpdateUnits()
     {
+        if (_playerUnit.Count == 0)
+            return;
+        
         foreach(var (_, units) in _playerUnit)
         {
-            var unitsCopy = units.ToList();
+            var unitsCopy = units?.ToList();
+            if (unitsCopy == null) 
+                continue;
+            
             foreach (var unit in unitsCopy)
             {
                 unit.Update();
 
-                if(_allUnits.TryGetValue(PlayerSideHelper.GetOppositeSide(unit.PlayerSide), out var unitList))
+                if (_allUnits.TryGetValue(PlayerSideHelper.GetOppositeSide(unit.PlayerSide), out var unitList))
                     unit.CheckClosestUnit(unitList);
             }
         }

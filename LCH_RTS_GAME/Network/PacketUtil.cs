@@ -52,6 +52,22 @@ public static class PacketUtil
         Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
         return stream;
     }
+    
+    public static byte[] SC_START_GAME_PACKET()
+    {
+        var builder = new FlatBufferBuilder(1024);
+        
+        SC_START_GAME.StartSC_START_GAME(builder);
+        var offset = SC_START_GAME.EndSC_START_GAME(builder);
+        builder.Finish(offset.Value);
+        var bodyArr = builder.SizedByteArray();
+        
+        var stream = new byte[bodyArr.Length + 4];
+        Array.Copy(BitConverter.GetBytes((ushort)stream.Length), 0, stream, 0, 2);
+        Array.Copy(BitConverter.GetBytes((ushort)PACKET_ID.SC_START_GAME), 0, stream, 2, 2);
+        Array.Copy(bodyArr, 0, stream, 4, bodyArr.Length);
+        return stream;
+    }
 
     public static byte[] SC_UNIT_SPAWN_PACKET(long unitId, EPlayerSide playerSide, int unitType, Vec2 pos, UnitStat stat)
     {

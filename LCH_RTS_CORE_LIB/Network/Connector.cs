@@ -9,11 +9,10 @@ public class Connector
     
     public void Connect(IPEndPoint endPoint, Func<PacketSession> sessionFactory, int count = 1)
     {
+        _sessionFactory = sessionFactory;
         for (var i = 0; i < count; i++)
         {
             var socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _sessionFactory += sessionFactory;
-            
             var args = new SocketAsyncEventArgs();
             args.Completed += OnConnectCompleted;
             args.RemoteEndPoint = endPoint;

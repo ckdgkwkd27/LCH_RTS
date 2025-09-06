@@ -9,18 +9,18 @@ public class ServerSession : PacketSession
     private GameSession _gameSession;
     public override void OnRecvPacket(ArraySegment<byte> buffer)
     {
-        
+        PacketProcessor.Instance.OnRecvPacket(this, buffer);
     }
     
     public override void OnConnected(EndPoint endPoint)
     {
         Send(PacketUtil.CM_MATCH_START_Packet());
-        Console.WriteLine($"OnConnected : {endPoint}");
+        Console.WriteLine($"OnConnected MatchingServer: {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
-        Console.WriteLine($"OnDisconnected : {endPoint}");
+        Console.WriteLine($"OnDisconnected MatchingServer: {endPoint}");
         BotSessionManager.Instance.RemoveMatchingSession(this);
     }
 
@@ -31,7 +31,6 @@ public class ServerSession : PacketSession
     
     public override void FlushSend()
     {
-        throw new NotImplementedException();
     }
     
     public void Send(PACKET_ID id, IFlatbufferObject packet)
