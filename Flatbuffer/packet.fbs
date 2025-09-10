@@ -1,0 +1,155 @@
+table Vec2 { 
+  x:float; 
+  y:float;
+}
+
+table UnitStat {
+    attack: int32;
+    maxHp: int32;
+    currHp: int32;
+    speed: float;
+    cost: int32;
+    attack_range: float;
+    sight: float;
+}
+
+table CardInfo {
+    unit_type: int32;
+    cost: int32;
+    name: string;
+}
+
+// Packets
+enum PACKET_ID : ushort {
+    CS_GREET = 1,
+    SC_GREET = 2,
+    CS_LOGIN,
+    SC_LOGIN,
+    CS_ENTER_GAME,
+    SC_ENTER_GAME,
+    SC_START_GAME,
+    CS_UNIT_SPAWN,
+    SC_UNIT_SPAWN,
+    SC_UNIT_MOVE,
+    SC_UNIT_ATTACK,
+    SC_REMOVE_UNIT,
+    SC_END_GAME,
+    SC_ENTER_LOBBY,    
+    SC_PLAYER_COST_UPDATE,
+    SC_PLAYER_HAND_UPDATE,
+    
+    CM_MATCH_START,
+    MC_MATCH_JOIN_INFO,
+    MC_PLAYER_REGISTERED,
+    
+    MG_GAME_READY,
+    
+    PACKET_MAX
+}
+
+table CS_GREET {
+    data: string;
+}
+
+table SC_GREET {
+    values: [int32];
+    answer: string;
+}
+
+table CS_LOGIN {
+    player_id: int64;
+    match_id: int64;
+}
+
+table SC_LOGIN {
+    room_id: int64;
+}
+
+table CS_ENTER_GAME {
+    player_id: int64;
+    room_id: int64;
+}
+
+table SC_ENTER_GAME {
+    room_id: int64;
+    player_id: int64;
+    player_side: uint8;
+    curr_cost: int32;
+    player_hands: [CardInfo];
+}
+
+table SC_START_GAME {
+    
+}
+
+table CS_UNIT_SPAWN {
+    room_id: int64;
+    unit_type: int32;
+    create_pos: Vec2;
+}
+
+table SC_UNIT_SPAWN {
+    unit_id: int64;
+    player_side: int8;
+    unit_type: int32;
+    create_pos: Vec2;
+    unit_stat: UnitStat;
+}
+
+table SC_UNIT_MOVE {
+    room_id: int64;
+    unit_id: int64;
+    unit_type: int32;
+    now_pos: Vec2;
+}
+
+table SC_UNIT_ATTACK {
+    room_id: int64;
+    attacker_id: int64;
+    victim_id: int64;
+    remain_hp: int32;
+}
+    
+table SC_REMOVE_UNIT {
+    room_id: int64;
+    unit_id: int64;
+}
+
+table SC_END_GAME {
+    room_id: int64;
+    winner_player_side: int8;
+    loser_player_side: int8;
+}
+
+table SC_PLAYER_COST_UPDATE {
+    room_id: int64;
+    remain_cost: int32;
+}
+
+table SC_PLAYER_HAND_UPDATE {
+    room_id: int64;
+    player_id: int64;
+    player_hands: [CardInfo];
+}
+
+//Match-Client
+table CM_MATCH_START {
+}
+
+table MC_MATCH_JOIN_INFO {
+    player_id: int64;
+    match_id: int64;
+    ip: string;
+    port: int32;
+}
+
+table MC_PLAYER_REGISTERED {
+    player_id: int64;
+}
+
+//Match-Game
+table MG_GAME_READY {
+    match_id: int64;
+    player_id_1: int64;
+    player_id_2: int64;
+}
