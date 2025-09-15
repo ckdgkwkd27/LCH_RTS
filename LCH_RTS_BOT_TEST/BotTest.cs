@@ -6,7 +6,7 @@ namespace LCH_RTS_BOT_TEST;
 
 internal static class Global
 {
-    public const int BotTestCnt = 7000;
+    public const int BotTestCnt = 5000;
     public static int GameStartedCnt = 0;
     public static long LastSentMsec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
@@ -17,6 +17,16 @@ internal static class Global
             Console.WriteLine($"bot={BotTestCnt},started={GameStartedCnt}");
         }
         return BotTestCnt == GameStartedCnt;
+    }
+
+    public static void IncStartedCnt()
+    {
+        Interlocked.Increment(ref GameStartedCnt);
+    }
+
+    public static void DecStartedCnt()
+    {
+        Interlocked.Decrement(ref GameStartedCnt);
     }
 }
 

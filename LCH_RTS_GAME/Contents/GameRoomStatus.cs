@@ -11,13 +11,13 @@ namespace LCH_RTS.Contents
 
     public abstract class GameRoomState
     {
-        protected GameRoomStatus _stateController { get; private set; }
-        protected GameRoom _gameRoom { get; private set; }
+        protected GameRoomStatus? StateController { get; private set; }
+        protected GameRoom? GameRoom { get; private set; }
 
         public void Initialize(GameRoomStatus stateController, GameRoom gameRoom)
         {
-            _stateController = stateController;
-            _gameRoom = gameRoom;
+            StateController = stateController;
+            GameRoom = gameRoom;
         }
 
         public abstract void Enter();
@@ -60,21 +60,24 @@ namespace LCH_RTS.Contents
         public override void Enter()
         {
             _gameStartTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 2;
-            Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Entered PreStart state. Game will start at {_gameStartTime}");
+            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Entered PreStart state. Game will start at {_gameStartTime}");
         }
 
         public override void Update()
         {
+            if (StateController is null)
+                return;
+            
             var utcNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (utcNow <= _gameStartTime) 
                 return;
-            _stateController.ChangeState();
-            Console.WriteLine($"Game Start roomId={_gameRoom.RoomId}");
+            StateController.ChangeState();
+            Console.WriteLine($"Game Start roomId={GameRoom!.RoomId}");
         }
 
         public override void Exit()
         {
-            Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Exiting PreStart state");
+            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Exiting PreStart state");
         }
 
         public override ERoomState GetStateType() => ERoomState.PreStart;
@@ -89,21 +92,24 @@ namespace LCH_RTS.Contents
     {
         public override void Enter()
         {
-            Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Entered Start state - Game Started!");
-            _gameRoom.Broadcast(PacketUtil.SC_START_GAME_PACKET());
-            _gameRoom.GameStart();
+            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Entered Start state - Game Started!");
+            GameRoom.Broadcast(PacketUtil.SC_START_GAME_PACKET());
+            GameRoom.GameStart();
         }
 
         public override void Update()
         {
-            _gameRoom.UpdatePlayersCost();
-            _gameRoom.UpdateUnits();
-            _gameRoom.UpdateTowers();
+            if (GameRoom is null)
+                return;
+            
+            GameRoom.UpdatePlayersCost();
+            GameRoom.UpdateUnits();
+            GameRoom.UpdateTowers();
         }
 
         public override void Exit()
         {
-            Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Exiting Start state");
+            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Exiting Start state");
         }
 
         public override ERoomState GetStateType() => ERoomState.Start;
@@ -118,7 +124,7 @@ namespace LCH_RTS.Contents
     {
         public override void Enter()
         {
-            Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Entered End state - Game Ended!");
+            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Entered End state - Game Ended!");
         }
 
         public override void Update()
@@ -127,7 +133,7 @@ namespace LCH_RTS.Contents
 
         public override void Exit()
         {
-            Console.WriteLine($"[GameRoom {_gameRoom.RoomId}] Exiting End state");
+            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Exiting End state");
         }
 
         public override ERoomState GetStateType() => ERoomState.End;

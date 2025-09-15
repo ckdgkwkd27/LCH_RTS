@@ -9,7 +9,7 @@ namespace LCH_RTS;
 
 internal abstract class Program
 {
-    private const int MaxRoomCount = 1001;
+    private const int MaxRoomCount = 2501;
     private static readonly int MaxThreadCount = Environment.ProcessorCount / 2;
 
     private static void NetworkThread()

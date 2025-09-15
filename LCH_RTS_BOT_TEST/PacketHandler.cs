@@ -28,7 +28,7 @@ public class PacketHandler
     public static void SC_START_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = SC_START_GAME.GetRootAsSC_START_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
-        Global.GameStartedCnt++;
+        Global.IncStartedCnt();
         if (Global.IsAllGameStarted())
         {
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -62,7 +62,7 @@ public class PacketHandler
     public static void SC_END_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = SC_END_GAME.GetRootAsSC_END_GAME(new ByteBuffer(buffer.Array, buffer.Offset));
-        Global.GameStartedCnt--;
+        Global.DecStartedCnt();
         var gs = session as GameSession;
         gs.Disconnect();
         Console.WriteLine($"RoomId={packet.RoomId}, Winner={packet.WinnerPlayerSide}, Loser={packet.LoserPlayerSide}");
