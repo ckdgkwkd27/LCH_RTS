@@ -1,4 +1,5 @@
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
 using LCH_RTS.Contents.Units;
@@ -10,14 +11,14 @@ public abstract class PacketHandler
     public static void CS_GREET_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = CS_GREET.GetRootAsCS_GREET(new ByteBuffer(buffer.Array, buffer.Offset));
-        Console.WriteLine($"CS_GREET : {packet.Data}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"CS_GREET : {packet.Data}");
     }
 
     public static void CS_LOGIN_Handler(PacketSession session, ArraySegment<byte> buffer)
     {
         var packet = CS_LOGIN.GetRootAsCS_LOGIN(new ByteBuffer(buffer.Array, buffer.Offset));
         session.Send(PacketUtil.SC_LOGIN_PACKET(packet.MatchId));
-        Console.WriteLine($"LOGIN: {packet.PlayerId}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"LOGIN: {packet.PlayerId}");
     }
     
     public static void CS_ENTER_GAME_Handler(PacketSession session, ArraySegment<byte> buffer)
@@ -42,27 +43,27 @@ public abstract class PacketHandler
         var room = GameRoomManager.Instance.GetRoom(packet.RoomId);
         if (room == null)
         {
-            Console.WriteLine($"[ERROR] Not Exist RoomId: {packet.RoomId}");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Not Exist RoomId: {packet.RoomId}");
             session.Disconnect();
             return;
         }
 
         if (packet.CreatePos == null)
         {
-            Console.WriteLine("[ERROR] Pos is NULL");
+            Logger.Log(ELogType.Console, ELogLevel.Error, "[ERROR] Pos is NULL");
             session.Disconnect();
             return;
         }
 
         if (!UnitUtil.IsValidSpawnSpace(packet.CreatePos.Value))
         {
-            Console.WriteLine($"[Warning] Pos is Not Valid=({packet.CreatePos.Value.X},{packet.CreatePos.Value.Y})");
+            Logger.Log(ELogType.Console, ELogLevel.Warning, $"[Warning] Pos is Not Valid=({packet.CreatePos.Value.X},{packet.CreatePos.Value.Y})");
             return;
         }
 
         if (room.GetRoomState() != ERoomState.Start)
         {
-            Console.WriteLine($"[ERROR] Not Able RoomState");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Not Able RoomState");
             session.Disconnect();
             return;
         }
@@ -71,7 +72,7 @@ public abstract class PacketHandler
         var player = PlayerManager.Instance.GetPlayer((session as ClientSession)!);
         if (player is null)
         {
-            Console.WriteLine($"[ERROR] Not Exist Player");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Not Exist Player");
             session.Disconnect();
             return;
         }
@@ -80,7 +81,7 @@ public abstract class PacketHandler
         var playerSide = room.GetPlayerSide(player);
         if (playerSide == EPlayerSide.Max)
         {
-            Console.WriteLine($"[ERROR] PlayerSide is Max");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] PlayerSide is Max");
             session.Disconnect();
             return;
         }
@@ -88,13 +89,13 @@ public abstract class PacketHandler
         var playerCost = room.GetPlayerCost(playerSide);
         if (playerCost < unitStat.Cost) 
         {
-            Console.WriteLine($"[WARNING] Player {player.PlayerId} insufficient cost. Required: {unitStat.Cost}, Current: {playerCost}");
+            Logger.Log(ELogType.Console, ELogLevel.Warning, $"[WARNING] Player {player.PlayerId} insufficient cost. Required: {unitStat.Cost}, Current: {playerCost}");
             return;
         }
         
         if (!room.HasCardInHand(playerSide, packet.UnitType))
         {
-            Console.WriteLine($"[WARNING] Player {player.PlayerId} does not have card with UnitType {packet.UnitType}");
+            Logger.Log(ELogType.Console, ELogLevel.Warning, $"[WARNING] Player {player.PlayerId} does not have card with UnitType {packet.UnitType}");
             return;
         }
 
@@ -125,6 +126,6 @@ public abstract class PacketHandler
             room = new GameRoom(matchId);
             GameRoomManager.Instance.Add(room);
         }
-        Console.WriteLine($"[MG_GAME_READY] GameRoom {matchId} created for match {matchId} with players: {packet.PlayerId1}, {packet.PlayerId2}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"[MG_GAME_READY] GameRoom {matchId} created for match {matchId} with players: {packet.PlayerId1}, {packet.PlayerId2}");
     }
 }

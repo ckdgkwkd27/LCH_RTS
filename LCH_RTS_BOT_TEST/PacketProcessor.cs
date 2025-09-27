@@ -2,6 +2,7 @@ using Google.FlatBuffers;
 using System.Collections.Generic;
 using System;
 using System.Diagnostics;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
@@ -61,7 +62,7 @@ public class PacketProcessor
         count += 2;
         if (buffer.Array.Length < size)
         {
-            Console.WriteLine("[ERROR] Packet size is too small.");
+            Logger.Log(ELogType.Console, ELogLevel.Error, "[ERROR] Packet size is too small.");
             return;
         }
 

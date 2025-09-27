@@ -1,3 +1,5 @@
+using LCH_COMMON;
+
 namespace LCH_RTS.Contents.Units;
 
 public class Tower : UnitBase
@@ -91,12 +93,12 @@ public class Tower : UnitBase
         var gameRoom = GameRoomManager.Instance.GetRoom(roomId);
         if (gameRoom == null)
         {
-            Console.WriteLine($"Error: Cannot Find Room (Tower::OnDead)");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"Error: Cannot Find Room (Tower::OnDead)");
             return;
         }
 
         gameRoom.SetRoomState(ERoomState.End);
         gameRoom.Broadcast(PacketUtil.SC_END_GAME_PACKET(gameRoom.RoomId, (sbyte)winnerSide, (sbyte)loserSide));
-        Console.WriteLine($"Game Finish.Winner={winnerSide},Loser={loserSide}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"Game Finish.Winner={winnerSide},Loser={loserSide}");
     }
 }

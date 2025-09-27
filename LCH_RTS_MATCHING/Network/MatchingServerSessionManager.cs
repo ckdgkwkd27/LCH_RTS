@@ -1,3 +1,4 @@
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_MATCHING.Network;
@@ -23,8 +24,7 @@ public static class MatchingServerSessionManager
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[ERROR] Session FlushSend failed: {ex.Message}");
-                    // 오류가 발생한 세션을 리스트에서 제거
+                    Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Session FlushSend failed: {ex.Message}");
                     RemoveInvalidSession(session);
                 }
             }
@@ -81,6 +81,19 @@ public static class MatchingServerSessionManager
         {
             AllSessions.Remove(session);
             GameServers.Remove(session);
+        }
+    }
+
+    public static GameSession? GetFirstGameServer()
+    {
+        using (Lock.EnterScope())
+        {
+            if (GameServers.Count == 0)
+            {
+                return null;
+            }
+
+            return GameServers[0];
         }
     }
 }

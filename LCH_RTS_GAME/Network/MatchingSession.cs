@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Network;
 
@@ -23,13 +24,13 @@ public class MatchingSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     {
         GameServerSessionManager.AddSession(this);
-        Console.WriteLine($"[MatchingSession] Connected to Matching Server: {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"[MatchingSession] Connected to Matching Server: {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
         GameServerSessionManager.RemoveSession(this);
-        Console.WriteLine($"[MatchingSession] Disconnected from Matching Server: {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"[MatchingSession] Disconnected from Matching Server: {endPoint}");
     }
 
     public override void OnSend(int sendBytes)
@@ -38,7 +39,7 @@ public class MatchingSession : PacketSession
 
     public override void OnRecvPacket(ArraySegment<byte> buffer)
     {
-        PacketProcessor.Instance.OnRecvPacket(this, buffer); // Processor ignores session concrete type
+        PacketProcessor.Instance.OnRecvPacket(this, buffer);
     }
 
     public override void FlushSend()

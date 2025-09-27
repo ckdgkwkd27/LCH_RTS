@@ -1,3 +1,4 @@
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS.Network;
@@ -23,7 +24,7 @@ public static class GameServerSessionManager
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[ERROR] Session FlushSend failed: {ex.Message}");
+                    Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Session FlushSend failed: {ex.Message}");
                     RemoveInvalidSession(session);
                 }
             }

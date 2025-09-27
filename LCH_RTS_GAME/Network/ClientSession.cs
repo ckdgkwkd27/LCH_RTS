@@ -1,5 +1,6 @@
 using System.Net;
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
 using LCH_RTS.Network;
@@ -23,13 +24,13 @@ public class ClientSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     { 
         GameServerSessionManager.AddSession(this);
-        Console.WriteLine($"OnConnected : {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"OnConnected : {endPoint}");
     }
     
     public override void OnDisconnected(EndPoint endPoint)
     {
         GameServerSessionManager.RemoveSession(this);
-        Console.WriteLine($"OnDisconnected : {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"OnDisconnected : {endPoint}");
     }
 
     public override void OnSend(int sendBytes)

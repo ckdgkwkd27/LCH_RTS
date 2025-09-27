@@ -1,5 +1,6 @@
 using System.Net;
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
@@ -15,18 +16,18 @@ public class ServerSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     {
         Send(PacketUtil.CM_MATCH_START_Packet());
-        Console.WriteLine($"OnConnected MatchingServer: {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"OnConnected MatchingServer: {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
-        Console.WriteLine($"OnDisconnected MatchingServer: {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"OnDisconnected MatchingServer: {endPoint}");
         BotSessionManager.Instance.RemoveMatchingSession(this);
     }
 
     public override void OnSend(int numOfBytes)
     {
-        Console.WriteLine($"Transferred bytes: {numOfBytes}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"Transferred bytes: {numOfBytes}");
     }
     
     public override void FlushSend()

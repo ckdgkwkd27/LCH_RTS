@@ -1,3 +1,5 @@
+using LCH_COMMON;
+
 namespace LCH_RTS.Contents
 {
     public enum ERoomState
@@ -60,7 +62,7 @@ namespace LCH_RTS.Contents
         public override void Enter()
         {
             _gameStartTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 2;
-            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Entered PreStart state. Game will start at {_gameStartTime}");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[GameRoom {GameRoom!.RoomId}] Entered PreStart state. Game will start at {_gameStartTime}");
         }
 
         public override void Update()
@@ -72,12 +74,12 @@ namespace LCH_RTS.Contents
             if (utcNow <= _gameStartTime) 
                 return;
             StateController.ChangeState();
-            Console.WriteLine($"Game Start roomId={GameRoom!.RoomId}");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"Game Start roomId={GameRoom!.RoomId}");
         }
 
         public override void Exit()
         {
-            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Exiting PreStart state");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[GameRoom {GameRoom!.RoomId}] Exiting PreStart state");
         }
 
         public override ERoomState GetStateType() => ERoomState.PreStart;
@@ -92,7 +94,7 @@ namespace LCH_RTS.Contents
     {
         public override void Enter()
         {
-            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Entered Start state - Game Started!");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[GameRoom {GameRoom!.RoomId}] Entered Start state - Game Started!");
             GameRoom.Broadcast(PacketUtil.SC_START_GAME_PACKET());
             GameRoom.GameStart();
         }
@@ -109,7 +111,7 @@ namespace LCH_RTS.Contents
 
         public override void Exit()
         {
-            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Exiting Start state");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[GameRoom {GameRoom!.RoomId}] Exiting Start state");
         }
 
         public override ERoomState GetStateType() => ERoomState.Start;
@@ -124,7 +126,7 @@ namespace LCH_RTS.Contents
     {
         public override void Enter()
         {
-            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Entered End state - Game Ended!");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[GameRoom {GameRoom!.RoomId}] Entered End state - Game Ended!");
         }
 
         public override void Update()
@@ -133,7 +135,7 @@ namespace LCH_RTS.Contents
 
         public override void Exit()
         {
-            Console.WriteLine($"[GameRoom {GameRoom!.RoomId}] Exiting End state");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[GameRoom {GameRoom!.RoomId}] Exiting End state");
         }
 
         public override ERoomState GetStateType() => ERoomState.End;
@@ -179,7 +181,7 @@ namespace LCH_RTS.Contents
 
             if (!_states.TryGetValue(newState, out var nextState))
             {
-                Console.WriteLine($"[ERROR] Invalid state transition to {newState}");
+                Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Invalid state transition to {newState}");
                 return;
             }
             

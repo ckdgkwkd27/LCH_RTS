@@ -1,13 +1,12 @@
 using System.Net;
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_MATCHING.Network;
 
 public class GameSession : PacketSession
 {
-    public static GameSession? GameServer = new();
-    
     public GameSession()
     {
         sessionCategory = EPacketSessionCategory.GameSession;
@@ -23,15 +22,13 @@ public class GameSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     {
         MatchingServerSessionManager.AddSession(this);
-        GameServer = this;
-        Console.WriteLine($"GameSession OnConnected : {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"GameSession OnConnected : {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
         MatchingServerSessionManager.RemoveSession(this);
-        GameServer = null;
-        Console.WriteLine($"GameSession OnDisconnected : {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info,$"GameSession OnDisconnected : {endPoint}");
     }
 
     public override void OnSend(int sendBytes)

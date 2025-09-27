@@ -83,11 +83,13 @@ public class MatchManager
                     currentWindow = initialWindow;
 
                     var resultMatchId = _currMatchId++;
-                    GameSession.GameServer?.Send(PacketUtil.MG_GAME_READY_PACKET(resultMatchId, firstPlayer.PlayerId, matchedPlayer.Value.PlayerId));
+                    var gs = MatchingServerSessionManager.GetFirstGameServer();
+                    if (gs is null) return;
+                    gs.Send(PacketUtil.MG_GAME_READY_PACKET(resultMatchId, firstPlayer.PlayerId, matchedPlayer.Value.PlayerId));
 
                     var ip = NetConfig.Ip;
                     var port = NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT);
-                    Console.WriteLine($"[INFO] MatchId={resultMatchId}, Sent EndPoint: {ip}:{port}");
+                    Logger.Log(ELogType.Console, ELogLevel.Info, $"[INFO] MatchId={resultMatchId}, Sent EndPoint: {ip}:{port}");
 
                     var firstPlayerId = (firstPlayer.Session as ClientSession)!.PlayerId;
                     Debug.Assert(firstPlayerId != 0);

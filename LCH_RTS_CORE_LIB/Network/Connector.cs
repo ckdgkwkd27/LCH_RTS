@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using LCH_COMMON;
 
 namespace LCH_RTS_CORE_LIB.Network;
 
@@ -37,7 +38,7 @@ public class Connector
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Logger.Log(ELogType.Console, ELogLevel.Info, e.ToString());
         }
     }
 
@@ -58,12 +59,12 @@ public class Connector
             }
             else
             {
-                Console.WriteLine($"OnConnectCompleted Fail: {args.SocketError}");
+                Logger.Log(ELogType.Console, ELogLevel.Error, $"OnConnectCompleted Fail: {args.SocketError}");
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Logger.Log(ELogType.Console, ELogLevel.Info, e.ToString());
         }
     }
 }

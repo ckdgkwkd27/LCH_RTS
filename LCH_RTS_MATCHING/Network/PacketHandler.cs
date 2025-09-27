@@ -1,4 +1,5 @@
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS_MATCHING.MatchMake;
 
@@ -13,6 +14,6 @@ public abstract class PacketHandler
         var playerId = (session as ClientSession)!.PlayerId;
         var playerMmr = new Random().Next(500);
         MatchManager.Instance.Enqueue(new MatcherInfo(playerId, playerMmr, session));
-        Console.WriteLine($"NewMatch Add. Player={playerId}, MMR={playerMmr}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"NewMatch Add. Player={playerId}, MMR={playerMmr}");
     }
 }

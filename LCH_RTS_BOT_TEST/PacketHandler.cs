@@ -2,6 +2,7 @@ using Google.FlatBuffers;
 using System;
 using System.Diagnostics;
 using System.Net;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
@@ -43,7 +44,7 @@ public class PacketHandler
         // 타워(unitType 2,3)는 제외하고 자신이 소환한 유닛에 대해서만 로그 출력
         if (gs.PlayerSide == packet.PlayerSide && packet.UnitType != 2 && packet.UnitType != 3)
         {
-            Console.WriteLine($"RoomId={gs.RoomId}, PlayerId={gs.PlayerId}, PlayerSide={gs.PlayerSide}, spawned UnitType={packet.UnitType}");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"RoomId={gs.RoomId}, PlayerId={gs.PlayerId}, PlayerSide={gs.PlayerSide}, spawned UnitType={packet.UnitType}");
         }
     }
 
@@ -65,7 +66,7 @@ public class PacketHandler
         Global.DecStartedCnt();
         var gs = session as GameSession;
         gs.Disconnect();
-        Console.WriteLine($"RoomId={packet.RoomId}, Winner={packet.WinnerPlayerSide}, Loser={packet.LoserPlayerSide}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"RoomId={packet.RoomId}, Winner={packet.WinnerPlayerSide}, Loser={packet.LoserPlayerSide}");
     }
 
     public static void SC_PLAYER_COST_UPDATE_Handler(PacketSession session, ArraySegment<byte> buffer)
@@ -82,7 +83,7 @@ public class PacketHandler
 
         var playerId = packet.PlayerId;
         var matchId = packet.MatchId;
-        Console.WriteLine($"PlayerId={playerId}, MatchId={matchId}, IP={packet.Ip}, Port={packet.Port}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"PlayerId={playerId}, MatchId={matchId}, IP={packet.Ip}, Port={packet.Port}");
         var endPoint = new IPEndPoint(IPAddress.Parse(packet.Ip), packet.Port);
         var connector = new Connector();
         connector.Connect(endPoint, () => BotSessionManager.Instance.GenerateGame(playerId, matchId));

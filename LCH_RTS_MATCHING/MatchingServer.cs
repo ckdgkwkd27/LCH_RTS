@@ -27,6 +27,8 @@ internal class Program
     
     public static void Main(string[] args)
     {
+        Logger.Initialize();
+        
         var host = Dns.GetHostName();
         var ipHost = Dns.GetHostEntry(host);
         var ipAddr = ipHost.AddressList[0];
@@ -34,17 +36,13 @@ internal class Program
         //Client Accept
         {
             var endPoint = new IPEndPoint(ipAddr, NetConfig.GetPort(EPortInfo.MATCHING_CLIENT_PORT));
-
-            var acceptor = new Acceptor();
-            acceptor.Init(endPoint, () => new ClientSession(), 1000, 1000);
+            new Acceptor().Init(endPoint, () => new ClientSession(), 1000, 1000);
         }
         
         //GameServer Accept
         {
             var endPoint = new IPEndPoint(ipAddr, NetConfig.GetPort(EPortInfo.MATCHING_GAMESERVER_PORT));
-
-            var acceptor = new Acceptor();
-            acceptor.Init(endPoint, () => new GameSession());
+            new Acceptor().Init(endPoint, () => new GameSession());
         }
         
         //Networking
@@ -56,7 +54,7 @@ internal class Program
             t.Start();
         }
         
-        //GameRoom
+        //Matchmaking
         {
             var t = new Thread(MatchThread)
             {
@@ -65,6 +63,6 @@ internal class Program
             t.Start();
         }
         
-        Console.WriteLine("MatchingServer is running...");
+        Logger.Log(ELogType.Console, ELogLevel.Info,"MatchingServer is running...");
     }
 }

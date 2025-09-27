@@ -84,7 +84,6 @@ public class Unit : UnitBase
             dirY /= mag;
         }
         IncPos(dirX * Stat.Speed, dirY * Stat.Speed);
-        //Console.WriteLine($"CurrentLevel: {_currentLevel}, MoveTo: {targetWp.Pos}");
     }
 
     protected override void UpdateChase()

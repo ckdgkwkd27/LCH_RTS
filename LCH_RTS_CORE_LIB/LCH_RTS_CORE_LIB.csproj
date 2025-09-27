@@ -19,4 +19,8 @@
       <PackageReference Include="Google.FlatBuffers" Version="25.2.10" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\LCH_COMMON\LCH_COMMON.csproj" />
+    </ItemGroup>
+
 </Project>

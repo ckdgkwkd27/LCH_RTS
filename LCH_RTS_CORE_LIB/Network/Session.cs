@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Runtime.Serialization;
 using Google.FlatBuffers;
+using LCH_COMMON;
 
 namespace LCH_RTS_CORE_LIB.Network;
 
@@ -125,31 +126,31 @@ public abstract class Session
         Clear();
     }
 
-    public void RegisterSend()
+    private void RegisterSend()
     {
         if(_disconnected)
             return;
 
         while (_sendQueue.Count > 0)
         {
-            ArraySegment<byte> sendBuff = _sendQueue.Dequeue();
+            var sendBuff = _sendQueue.Dequeue();
             _pendingForSend.Add(sendBuff);
         }
         _sendArgs.BufferList = _pendingForSend;
 
         try
         {
-            bool pending = _socket.SendAsync(_sendArgs);
-            if (pending == false)
+            var pending = _socket.SendAsync(_sendArgs);
+            if (!pending)
                 OnSendCompleted(null, _sendArgs);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Logger.Log(ELogType.Console, ELogLevel.Error, e.ToString());
         }
     }
 
-    void OnSendCompleted(object? sender, SocketAsyncEventArgs args)
+    private void OnSendCompleted(object? sender, SocketAsyncEventArgs args)
     {
         using (_lock.EnterScope())  
         {
@@ -167,7 +168,7 @@ public abstract class Session
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"OnSendCompleted Failed {e}");
+                    Logger.Log(ELogType.Console, ELogLevel.Error, $"OnSendCompleted Failed {e}");
                 }
             }
             else
@@ -177,11 +178,11 @@ public abstract class Session
         }
     }
 
-    public void RegisterRecv()
+    private void RegisterRecv()
     {
         if (_disconnected)
         {
-            Console.WriteLine("RegisterRecv Disconnected");
+            Logger.Log(ELogType.Console, ELogLevel.Info, "RegisterRecv Disconnected");
             return;
         }
 
@@ -197,7 +198,7 @@ public abstract class Session
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Logger.Log(ELogType.Console, ELogLevel.Error, e.ToString());
         }
     }
 
@@ -233,7 +234,7 @@ public abstract class Session
             }
             catch (Exception e)
             {
-                Console.WriteLine($"OnRecvCompleted Failed {e}");
+                Logger.Log(ELogType.Console, ELogLevel.Error, $"OnRecvCompleted Failed {e}");
             }
         }
         else

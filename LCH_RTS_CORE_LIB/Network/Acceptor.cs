@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using LCH_COMMON;
 
 namespace LCH_RTS_CORE_LIB.Network;
 
@@ -19,7 +20,7 @@ public class Acceptor
             _listenSocket.Bind(endPoint);
             _listenSocket.Listen(maxListenCnt);
 
-            Console.WriteLine($"[Acceptor] Listening on {endPoint}");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"[Acceptor] Listening on {endPoint}");
 
             for (var i = 0; i < maxRegisterCnt; i++)
             {
@@ -30,7 +31,7 @@ public class Acceptor
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Acceptor] Init Error: {ex}");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"[Acceptor] Init Error: {ex}");
         }
     }
 
@@ -46,7 +47,7 @@ public class Acceptor
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Logger.Log(ELogType.Console, ELogLevel.Error, e.ToString());
         }
     }
     
@@ -61,11 +62,11 @@ public class Acceptor
                 session.OnConnected(args.AcceptSocket.RemoteEndPoint);
             }
             else
-                Console.WriteLine(args.SocketError.ToString());
+                Logger.Log(ELogType.Console, ELogLevel.Error, args.SocketError.ToString());
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            Logger.Log(ELogType.Console, ELogLevel.Error, e.ToString());
         }
 
         RegisterAccept(args);

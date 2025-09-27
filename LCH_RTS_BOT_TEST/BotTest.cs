@@ -14,7 +14,7 @@ internal static class Global
     {
         if (BotTestCnt != GameStartedCnt)
         {
-            Console.WriteLine($"bot={BotTestCnt},started={GameStartedCnt}");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"bot={BotTestCnt},started={GameStartedCnt}");
         }
         return BotTestCnt == GameStartedCnt;
     }
@@ -35,6 +35,7 @@ internal class Program
     public static void Main(string[] args)
     {
         Thread.Sleep(3000);
+        Logger.Initialize();
         
         var host = Dns.GetHostName();
         var ipHost = Dns.GetHostEntry(host);

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Collections.Generic;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_BOT_TEST;
@@ -19,12 +20,12 @@ public class GameSession : PacketSession
     public override void OnConnected(EndPoint endPoint)
     {
         Send(PacketUtil.CS_LOGIN_Packet(PlayerId, MatchId));
-        Console.WriteLine($"OnConnected GameServer: {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"OnConnected GameServer: {endPoint}");
     }
 
     public override void OnDisconnected(EndPoint endPoint)
     {
-        Console.WriteLine($"OnDisConnected GameServer: {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"OnDisConnected GameServer: {endPoint}");
         BotSessionManager.Instance.RemoveGameSession(this);
     }
 

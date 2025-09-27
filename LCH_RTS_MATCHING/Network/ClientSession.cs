@@ -1,5 +1,6 @@
 using System.Net;
 using Google.FlatBuffers;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 
 namespace LCH_RTS_MATCHING.Network;
@@ -24,13 +25,13 @@ public class ClientSession : PacketSession
         PlayerId = PlayerIdGenerator.Instance.NextId();
         Send(PacketUtil.MC_PLAYER_REGISTERED_PACKET(PlayerId));
         MatchingServerSessionManager.AddSession(this);
-        Console.WriteLine($"Client OnConnected : {endPoint}, PlayerId={PlayerId}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"Client OnConnected : {endPoint}, PlayerId={PlayerId}");
     }
     
     public override void OnDisconnected(EndPoint endPoint)
     {
         MatchingServerSessionManager.RemoveSession(this);
-        Console.WriteLine($"Client OnDisconnected : {endPoint}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"Client OnDisconnected : {endPoint}");
     }
 
     public override void OnSend(int sendBytes)

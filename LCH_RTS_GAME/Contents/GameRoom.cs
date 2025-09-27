@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Linq;
+using LCH_COMMON;
 using LCH_RTS.Contents.Units;
 using LCH_RTS.Job;
 namespace LCH_RTS.Contents;
@@ -80,7 +81,7 @@ public class GameRoom: JobSerializer
             foreach (var tower in towers)
             {
                 Broadcast(PacketUtil.SC_UNIT_SPAWN_PACKET(tower.UnitId, playerSide, tower.UnitType, tower.Pos, tower.Stat));
-                Console.WriteLine("[DEBUG] SC_UNIT_SPAWN_PACKET sent!");
+                Logger.Log(ELogType.Console, ELogLevel.Debug, "[DEBUG] SC_UNIT_SPAWN_PACKET sent!");
             }
         }
         
@@ -109,11 +110,11 @@ public class GameRoom: JobSerializer
             _playerInGameInfos[playerSide] = new PlayerInGameInfo(player, playerSide, RoomId, 0, deck, hand);
             player.Session?.Send(PacketUtil.SC_ENTER_GAME_PACKET(RoomId, GetPlayerId(playerSide), (byte)playerSide, 0,
                 CardUtil.ConvertToCardInfos(deck.ShuffleAndTake(PlayerDeck.MAX_CARD_LIST)).ToArray()));
-            Console.WriteLine($"Player {player.PlayerId}({playerSide}) added to the game");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"Player {player.PlayerId}({playerSide}) added to the game");
             return;
         }
 
-        Console.WriteLine($"[WARNING] Player {player.PlayerId} could not be added to the game");
+        Logger.Log(ELogType.Console, ELogLevel.Warning, $"[WARNING] Player {player.PlayerId} could not be added to the game");
     }
 
     public long GetPlayerId(EPlayerSide playerSide)
@@ -125,7 +126,7 @@ public class GameRoom: JobSerializer
     {
         if (_playerSideIds.Any(id => id == INVALID_PLAYER_ID_VALUE))
         {
-            Console.WriteLine($"[WARNING] Game is not ready for room {RoomId}");
+            Logger.Log(ELogType.Console, ELogLevel.Warning, $"[WARNING] Game is not ready for room {RoomId}");
             return;
         }
 
@@ -135,7 +136,7 @@ public class GameRoom: JobSerializer
         _roomStatus.ChangeState(ERoomState.PreStart);
         PushAfter(1000, Update);
         
-        Console.WriteLine($"Game will enter PreStart state for room {RoomId}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"Game will enter PreStart state for room {RoomId}");
     }
 
     public EPlayerSide GetPlayerSide(Player player)
@@ -290,7 +291,7 @@ public class GameRoom: JobSerializer
         }
         else
         {
-            Console.WriteLine($"[WARNING] Card with UnitType {unitType} not found in player's hand");
+            Logger.Log(ELogType.Console, ELogLevel.Warning, $"[WARNING] Card with UnitType {unitType} not found in player's hand");
         }
 
         var handsConverted = CardUtil.ConvertToCardInfos(playerInfo.Hand);

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using LCH_COMMON;
+using LCH_COMMON;
 using LCH_RTS_CORE_LIB.Network;
 using LCH_RTS.Contents;
 using LCH_RTS.Network;
@@ -37,6 +38,8 @@ internal abstract class Program
     
     public static void Main(string[] args)
     {
+        Logger.Initialize();
+        
         var host = Dns.GetHostName();
         var ipHost = Dns.GetHostEntry(host);
         
@@ -44,7 +47,7 @@ internal abstract class Program
             .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
             .Where(addr => !IPAddress.IsLoopback(addr))
             .FirstOrDefault(addr => !IsPrivate(addr)) ?? IPAddress.Loopback;
-        Console.WriteLine($"GameServer binding to: {ipAddr}");
+        Logger.Log(ELogType.Console, ELogLevel.Info, $"GameServer binding to: {ipAddr}");
         
         var endPoint = new IPEndPoint(ipAddr, NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT));
 
@@ -73,7 +76,7 @@ internal abstract class Program
             t.Start();
         }
         
-        Console.WriteLine("GameServer is running...");
+        Logger.Log(ELogType.Console, ELogLevel.Info, "GameServer is running...");
 
         try
         {
@@ -86,11 +89,11 @@ internal abstract class Program
 
             var connector = new Connector();
             connector.Connect(matchingEndPoint, () => new MatchingSession(), 1);
-            Console.WriteLine($"Connecting to Matching Server at {matchingEndPoint}...");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"Connecting to Matching Server at {matchingEndPoint}...");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] Failed to connect to Matching Server: {ex.Message}");
+            Logger.Log(ELogType.Console, ELogLevel.Error, $"[ERROR] Failed to connect to Matching Server: {ex.Message}");
         }
         
         while (true)

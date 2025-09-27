@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Collections.Generic;
+using LCH_COMMON;
 
 namespace LCH_RTS_BOT_TEST;
 
@@ -17,7 +18,7 @@ public class BotSessionManager
         {
             var session = new ServerSession();
             _sessions.Add(session);
-            Console.WriteLine($"Connected-Matching Total BotCount={_sessions.Count}");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"Connected-Matching Total BotCount={_sessions.Count}");
             return session;
         }
     }
@@ -26,11 +27,13 @@ public class BotSessionManager
     {
         using(_lock.EnterScope())
         {
-            var session = new GameSession();
-            session.PlayerId = playerId;
-            session.MatchId = matchId;
+            var session = new GameSession
+            {
+                PlayerId = playerId,
+                MatchId = matchId
+            };
             _gameSessions.Add(session);
-            Console.WriteLine($"Connected-Game Total:({_gameSessions.Count}) Players");
+            Logger.Log(ELogType.Console, ELogLevel.Info, $"Connected-Game Total:({_gameSessions.Count}) Players");
             return session;
         }
     }
@@ -41,7 +44,7 @@ public class BotSessionManager
         {
             if (_sessions.Remove(session))
             {
-                Console.WriteLine($"Disconnected-Matching Total:({_sessions.Count}) Players");
+                Logger.Log(ELogType.Console, ELogLevel.Info, $"Disconnected-Matching Total:({_sessions.Count}) Players");
             }
         }
     }
@@ -52,7 +55,7 @@ public class BotSessionManager
         {
             if (_gameSessions.Remove(session))
             {
-                Console.WriteLine($"Disconnected-Game Total:({_gameSessions.Count}) Players");
+                Logger.Log(ELogType.Console, ELogLevel.Info, $"Disconnected-Game Total:({_gameSessions.Count}) Players");
             }
         }
     }
