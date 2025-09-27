@@ -21,7 +21,7 @@ public class MatchManager
     private static readonly Lazy<MatchManager> _instance = new(() => new MatchManager());
     public static MatchManager Instance => _instance.Value;
 
-    private readonly Queue<MatcherInfo> _matchQueue = new();
+    private readonly List<MatcherInfo> _matchQueue = new();
     private int _matchWindow = 100;
     private long _lastMatchTriedMSec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     private long _currMatchId = 1;
@@ -31,7 +31,7 @@ public class MatchManager
     {
         using (_lock.EnterScope())
         {
-            _matchQueue.Enqueue(info);
+            _matchQueue.Add(info);
         }
     }
 
@@ -43,78 +43,65 @@ public class MatchManager
             return;
         }
 
-        using (_lock.EnterScope())
+        if (_matchQueue.Count < 2)
         {
-            if (_matchQueue.Count < 2)
+            return;
+        }
+
+        var initialWindow = _matchWindow;
+        var currentWindow = _matchWindow;
+
+        while (_matchQueue.Count >= 2)
+        {
+            var firstPlayer = _matchQueue.First();
+
+            MatcherInfo? matchedPlayer = null;
+            for(var idx = 1; idx < _matchQueue.Count; idx++)
             {
-                return;
-            }
-
-            var initialWindow = _matchWindow;
-            var currentWindow = _matchWindow;
-
-            while (_matchQueue.Count >= 2)
-            {
-                var firstPlayer = _matchQueue.Peek();
-                _matchQueue.Dequeue();
-
-                MatcherInfo? matchedPlayer = null;
-                var tempQueue = new Queue<MatcherInfo>();
-
-                while (_matchQueue.Count > 0)
+                var player2 = _matchQueue.ElementAt(idx);
+                if (Math.Abs(firstPlayer.Mmr - player2.Mmr) <= currentWindow)
                 {
-                    var player2 = _matchQueue.Dequeue();
-
-                    if (Math.Abs(firstPlayer.Mmr - player2.Mmr) <= currentWindow)
-                    {
-                        matchedPlayer = player2;
-                        break;
-                    }
-                    tempQueue.Enqueue(player2);
-                }
-
-                if (matchedPlayer.HasValue)
-                {
-                    while (tempQueue.Count > 0)
-                    {
-                        _matchQueue.Enqueue(tempQueue.Dequeue());
-                    }
-
-                    currentWindow = initialWindow;
-
-                    var resultMatchId = _currMatchId++;
-                    var gs = MatchingServerSessionManager.GetFirstGameServer();
-                    if (gs is null) return;
-                    gs.Send(PacketUtil.MG_GAME_READY_PACKET(resultMatchId, firstPlayer.PlayerId, matchedPlayer.Value.PlayerId));
-
-                    var ip = NetConfig.Ip;
-                    var port = NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT);
-                    Logger.Log(ELogType.Console, ELogLevel.Info, $"[INFO] MatchId={resultMatchId}, Sent EndPoint: {ip}:{port}");
-
-                    var firstPlayerId = (firstPlayer.Session as ClientSession)!.PlayerId;
-                    Debug.Assert(firstPlayerId != 0);
-                    firstPlayer.Session.Send(PacketUtil.MC_MATCH_JOIN_INFO_PACKET(firstPlayerId, resultMatchId, ip, port));
-                    
-                    var matchedPlayerId = (matchedPlayer.Value.Session as ClientSession)!.PlayerId;
-                    Debug.Assert(matchedPlayerId != 0);
-                    matchedPlayer.Value.Session.Send(PacketUtil.MC_MATCH_JOIN_INFO_PACKET(matchedPlayerId, resultMatchId, ip, port));
-                }
-                else
-                {
-                    _matchQueue.Enqueue(firstPlayer);
-
-                    while (tempQueue.Count > 0)
-                    {
-                        _matchQueue.Enqueue(tempQueue.Dequeue());
-                    }
-
-                    currentWindow += 100;
+                    matchedPlayer = player2;
                     break;
                 }
+                idx++;
             }
 
-            _matchWindow = currentWindow;
-            _lastMatchTriedMSec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (matchedPlayer.HasValue)
+            {
+                currentWindow = initialWindow;
+
+                var resultMatchId = _currMatchId++;
+                var gs = MatchingServerSessionManager.GetFirstGameServer();
+                if (gs is null) return;
+                gs.Send(PacketUtil.MG_GAME_READY_PACKET(resultMatchId, firstPlayer.PlayerId, matchedPlayer.Value.PlayerId));
+
+                var ip = NetConfig.Ip;
+                var port = NetConfig.GetPort(EPortInfo.GAMESERVER_CLIENT_PORT);
+                Logger.Log(ELogType.Console, ELogLevel.Info, $"[INFO] MatchId={resultMatchId}, Sent EndPoint: {ip}:{port}");
+
+                var firstPlayerId = (firstPlayer.Session as ClientSession)!.PlayerId;
+                Debug.Assert(firstPlayerId != 0);
+                firstPlayer.Session.Send(PacketUtil.MC_MATCH_JOIN_INFO_PACKET(firstPlayerId, resultMatchId, ip, port));
+                
+                var matchedPlayerId = (matchedPlayer.Value.Session as ClientSession)!.PlayerId;
+                Debug.Assert(matchedPlayerId != 0);
+                matchedPlayer.Value.Session.Send(PacketUtil.MC_MATCH_JOIN_INFO_PACKET(matchedPlayerId, resultMatchId, ip, port));
+
+                using (_lock.EnterScope())
+                {
+                    _matchQueue.Remove(firstPlayer);
+                    _matchQueue.Remove(matchedPlayer.Value);
+                }
+            }
+            else
+            {
+                currentWindow += 100;
+                break;
+            }
         }
+
+        _matchWindow = currentWindow;
+        _lastMatchTriedMSec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
 }
