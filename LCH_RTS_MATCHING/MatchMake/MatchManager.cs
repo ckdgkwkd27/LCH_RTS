@@ -9,7 +9,7 @@ using LCH_RTS_MATCHING.Network;
 
 namespace LCH_RTS_MATCHING.MatchMake;
 
-public readonly struct MatcherInfo(long playerId, int mmr, PacketSession session)
+public readonly record struct MatcherInfo(long playerId, int mmr, PacketSession session)
 {
     public long PlayerId { get; } = playerId;
     public int Mmr { get; } = mmr;
@@ -26,6 +26,7 @@ public class MatchManager
     private long _lastMatchTriedMSec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     private long _currMatchId = 1;
     private readonly Lock _lock = new();
+    private readonly AutoResetEvent _event = new(false);
     
     public void Enqueue(MatcherInfo info)
     {
@@ -33,11 +34,14 @@ public class MatchManager
         {
             _matchQueue.Add(info);
         }
+        _event.Set();
     }
 
-    private const int MATCH_INTERVAL_MSEC = 100;
+    private const int MATCH_INTERVAL_MSEC = 10;
     public void ProcessMatching()
     {
+        _event.WaitOne();
+        
         if (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _lastMatchTriedMSec < MATCH_INTERVAL_MSEC)
         {
             return;
