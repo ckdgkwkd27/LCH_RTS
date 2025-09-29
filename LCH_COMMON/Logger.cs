@@ -2,6 +2,7 @@ namespace LCH_COMMON;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
 
 public enum ELogType
@@ -21,7 +22,7 @@ public enum ELogLevel
 public static class Logger
 {
     private static readonly string LogFilePath = "log.txt";
-    private static readonly Queue<(ELogType, ELogLevel, string)> LogQueue = new();
+    private static readonly ConcurrentQueue<(ELogType, ELogLevel, string)> LogQueue = new();
     private static readonly AutoResetEvent Event = new(false);
 
     public static void Initialize()
@@ -60,14 +61,7 @@ public static class Logger
 
     private static bool TryDequeue(out (ELogType LogType, ELogLevel LogLevel, string Message) element)
     {
-        if (LogQueue.Count == 0)
-        {
-            element = default;
-            return false;
-        }
-
-        element = LogQueue.Dequeue();
-        return true;
+        return LogQueue.TryDequeue(out element);
     }
 
     private static void FlushLogs(ELogType logType, ELogLevel logLevel, string message)

@@ -12,8 +12,9 @@ public abstract class PacketHandler
         CM_MATCH_START.GetRootAsCM_MATCH_START(new ByteBuffer(buffer.Array, buffer.Offset));
 
         var playerId = (session as ClientSession)!.PlayerId;
-        var playerMmr = new Random().Next(500);
-        MatchManager.Instance.Enqueue(new MatcherInfo(playerId, playerMmr, session));
+        var playerMmr = new Random().Next(1000);
+        var utcNowMsec = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        MatchManager.Instance.Enqueue(new MatcherInfo(playerId, playerMmr, session, utcNowMsec));
         Logger.Log(ELogType.Console, ELogLevel.Info, $"NewMatch Add. Player={playerId}, MMR={playerMmr}");
     }
 }

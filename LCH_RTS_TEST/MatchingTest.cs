@@ -1,176 +1,177 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using LCH_RTS_MATCHING;
-using LCH_RTS_MATCHING.MatchMake;
 using Xunit;
 
 namespace LCH_RTS_TEST
 {
-    public readonly struct TestMatcherInfo(long playerId, int mmr)
+    public readonly record struct TestMatcherInfo(long playerId, int mmr, long matchReqMsec = 0)
     {
         public long PlayerId { get; } = playerId;
         public int Mmr { get; } = mmr;
+        public long MatchReqMsec { get; } = matchReqMsec;
     }
 
     public class TestMatchManager
     {
-        private readonly Queue<TestMatcherInfo> _matchQueue = new();
-        private int _matchWindow = 100;
-        private long _lastMatchTriedSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-        public void Enqueue(TestMatcherInfo info)
-        {
-            _matchQueue.Enqueue(info);
-        }
+        private readonly List<TestMatcherInfo> _matchQueue = new();
+        public long CurrentTimeMsec { get; set; }
 
         public int GetQueueCount()
         {
             return _matchQueue.Count;
         }
 
-        public List<(TestMatcherInfo, TestMatcherInfo)>? ProcessMatching()
+        public void Enqueue(TestMatcherInfo info)
         {
-            var results = new List<(TestMatcherInfo, TestMatcherInfo)>();
-            var initialWindow = _matchWindow;
-            var currentWindow = _matchWindow;
+            _matchQueue.Add(info);
+        }
 
-            while (_matchQueue.Count >= 2)
+        public List<(TestMatcherInfo First, TestMatcherInfo Second)> ProcessMatching()
+        {
+            if (_matchQueue.Count < 2)
             {
-                // 큐에 2명 이상의 플레이어가 있을 때만 매칭 시도
-                var player1 = _matchQueue.Dequeue();
+                return [];
+            }
 
-                // 현재 윈도우 내에서 매칭 가능한 두 번째 플레이어를 찾음
-                TestMatcherInfo? matchedPlayer = null;
-                var tempQueue = new Queue<TestMatcherInfo>();
+            var resultList = new List<(TestMatcherInfo First, TestMatcherInfo Second)>();
+            var matchedCache = new bool[_matchQueue.Count];
+            var needToRemoveIndexes = new List<int>();
 
-                while (_matchQueue.Count > 0)
+            for (var i = 0; i < _matchQueue.Count; i++)
+            {
+                if (matchedCache[i])
                 {
-                    var player2 = _matchQueue.Dequeue();
-
-                    // MMR 차이가 현재 윈도우 이내인지 확인
-                    if (Math.Abs(player1.Mmr - player2.Mmr) <= currentWindow)
-                    {
-                        matchedPlayer = player2;
-                        break;
-                    }
-                    else
-                    {
-                        // 매칭되지 않은 플레이어는 임시 큐에 저장
-                        tempQueue.Enqueue(player2);
-                    }
+                    continue;
                 }
 
-                // 매칭된 플레이어가 있으면 결과에 추가
-                if (matchedPlayer.HasValue)
+                var firstPlayer = _matchQueue[i];
+                var nowMsec = CurrentTimeMsec == 0 ? firstPlayer.MatchReqMsec : CurrentTimeMsec;
+
+                for (var j = i + 1; j < _matchQueue.Count; j++)
                 {
-                    // 임시 큐에 저장된 나머지 플레이어들을 원래 큐로 복사
-                    while (tempQueue.Count > 0)
+                    if (matchedCache[j])
                     {
-                        _matchQueue.Enqueue(tempQueue.Dequeue());
+                        continue;
                     }
 
-                    // 매칭 성공 시 윈도우를 초기값으로 리셋
-                    currentWindow = initialWindow;
-
-                    results.Add((player1, matchedPlayer.Value));
-                }
-                else
-                {
-                    // 매칭되지 않은 플레이어를 다시 큐에 추가
-                    _matchQueue.Enqueue(player1);
-
-                    // 임시 큐에 저장된 나머지 플레이어들을 원래 큐로 복사
-                    while (tempQueue.Count > 0)
+                    var candidate = _matchQueue[j];
+                    if (Math.Abs(firstPlayer.Mmr - candidate.Mmr) > CalcMatchWindow(nowMsec, firstPlayer.MatchReqMsec, candidate.MatchReqMsec))
                     {
-                        _matchQueue.Enqueue(tempQueue.Dequeue());
+                        continue;
                     }
 
-                    currentWindow += 100;
+                    matchedCache[i] = true;
+                    matchedCache[j] = true;
+                    needToRemoveIndexes.Add(i);
+                    needToRemoveIndexes.Add(j);
+                    resultList.Add((firstPlayer, candidate));
                     break;
                 }
             }
-            
-            _matchWindow = currentWindow;
-            _lastMatchTriedSecond = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            return results.Count > 0 ? results : null;
+
+            if (needToRemoveIndexes.Count == 0)
+            {
+                return resultList;
+            }
+
+            needToRemoveIndexes.Sort((a, b) => b.CompareTo(a));
+            foreach (var index in needToRemoveIndexes)
+            {
+                _matchQueue.RemoveAt(index);
+            }
+
+            return resultList;
+        }
+
+        private static long CalcMatchWindow(long nowMsec, long msec1, long msec2)
+        {
+            const int matchWindow = 100;
+            const int oneSecInMs = 1000;
+            const int matchWindowInc = 100;
+            var minMsec = Math.Min(msec1, msec2);
+            var matchThreshold = Math.Abs(nowMsec - minMsec);
+            return matchWindow + matchThreshold / oneSecInMs * matchWindowInc;
         }
     }
 
     public class MatchManagerTests
     {
         [Fact]
-        public void ProcessMatching_WithEmptyQueue_ReturnsNull()
+        public void _001_ProcessMatching_WithOnePlayer_ReturnsEmptyList()
         {
-            // Arrange
             var manager = new TestMatchManager();
+            manager.Enqueue(new TestMatcherInfo(1, 1000));
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.Null(result);
+            Assert.Empty(result);
         }
 
         [Fact]
-        public void ProcessMatching_WithOnePlayer_ReturnsNull()
+        public void _002_ProcessMatching_WithTwoPlayersInRange_CreatesMatch()
         {
-            // Arrange
-            var manager = new TestMatchManager();
-            var player = new TestMatcherInfo(1, 1000);
-            manager.Enqueue(player);
-
-            // Act
-            var result = manager.ProcessMatching();
-
-            // Assert
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public void ProcessMatching_WithTwoPlayersInRange_ReturnsMatch()
-        {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
             var player2 = new TestMatcherInfo(2, 1050);
 
             manager.Enqueue(player1);
             manager.Enqueue(player2);
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player2.PlayerId, result[0].Item2.PlayerId);
+            Assert.Equal(player1.PlayerId, result[0].First.PlayerId);
+            Assert.Equal(player2.PlayerId, result[0].Second.PlayerId);
+            Assert.Equal(0, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_WithTwoPlayersOutOfRange_ReturnsEmptyList()
+        public void _003_ProcessMatching_WithTwoPlayersOutOfRange_ReturnsEmptyList()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
-            var player2 = new TestMatcherInfo(2, 1200); // MMR difference: 200, outside default window of 100
+            var player2 = new TestMatcherInfo(2, 1200);
+
+            manager.Enqueue(player1);
+            manager.Enqueue(player2);
+            manager.CurrentTimeMsec = 0;
+
+            var result = manager.ProcessMatching();
+
+            Assert.Empty(result);
+            Assert.Equal(2, manager.GetQueueCount());
+        }
+
+        [Fact]
+        public void _004_ProcessMatching_WithWaitTime_AllowsBroaderWindow()
+        {
+            var manager = new TestMatchManager();
+            var player1 = new TestMatcherInfo(1, 1000);
+            var player2 = new TestMatcherInfo(2, 1200);
 
             manager.Enqueue(player1);
             manager.Enqueue(player2);
 
-            // Act
-            var result = manager.ProcessMatching();
+            manager.CurrentTimeMsec = 0;
+            var firstAttempt = manager.ProcessMatching();
+            Assert.Empty(firstAttempt);
+            Assert.Equal(2, manager.GetQueueCount());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.NotEmpty(result);
+            manager.CurrentTimeMsec = 2_000;
+            var secondAttempt = manager.ProcessMatching();
+
+            Assert.Single(secondAttempt);
+            Assert.Equal(player1.PlayerId, secondAttempt[0].First.PlayerId);
+            Assert.Equal(player2.PlayerId, secondAttempt[0].Second.PlayerId);
+            Assert.Equal(0, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_WithThreePlayersFirstTwoMatch_ReturnsOneMatch()
+        public void _005_ProcessMatching_WithThreePlayersFirstTwoMatch_LeavesOneInQueue()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
             var player2 = new TestMatcherInfo(2, 1050);
@@ -179,21 +180,19 @@ namespace LCH_RTS_TEST
             manager.Enqueue(player1);
             manager.Enqueue(player2);
             manager.Enqueue(player3);
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player2.PlayerId, result[0].Item2.PlayerId);
+            Assert.Equal(player1.PlayerId, result[0].First.PlayerId);
+            Assert.Equal(player2.PlayerId, result[0].Second.PlayerId);
+            Assert.Equal(1, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_WithThreePlayersFirstAndThirdMatch_ReturnsOneMatch()
+        public void _006_ProcessMatching_WithThreePlayersFirstAndThirdMatch_LeavesMiddlePlayer()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
             var player2 = new TestMatcherInfo(2, 1200);
@@ -202,83 +201,54 @@ namespace LCH_RTS_TEST
             manager.Enqueue(player1);
             manager.Enqueue(player2);
             manager.Enqueue(player3);
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player3.PlayerId, result[0].Item2.PlayerId);
+            Assert.Equal(player1.PlayerId, result[0].First.PlayerId);
+            Assert.Equal(player3.PlayerId, result[0].Second.PlayerId);
+            Assert.Equal(1, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_WithExactMMRMatch_ReturnsMatch()
+        public void _007_ProcessMatching_WithBoundaryDifference_ReturnsMatch()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
-            var player2 = new TestMatcherInfo(2, 1000); // Exact MMR match
+            var player2 = new TestMatcherInfo(2, 1100);
 
             manager.Enqueue(player1);
             manager.Enqueue(player2);
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player2.PlayerId, result[0].Item2.PlayerId);
+            Assert.Equal(player1.PlayerId, result[0].First.PlayerId);
+            Assert.Equal(player2.PlayerId, result[0].Second.PlayerId);
         }
 
         [Fact]
-        public void ProcessMatching_WithBoundaryMMRDifference_ReturnsMatch()
+        public void _008_ProcessMatching_WithDifferenceJustOverBoundary_ReturnsEmptyList()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
-            var player2 = new TestMatcherInfo(2, 1100); // Exactly 100 MMR difference (boundary case)
+            var player2 = new TestMatcherInfo(2, 1101);
 
             manager.Enqueue(player1);
             manager.Enqueue(player2);
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player2.PlayerId, result[0].Item2.PlayerId);
-        }
-
-        //매칭윈도우 오버여도 다음 틱에 돌아야 함. 이 케이스 오류
-        [Fact]
-        public void ProcessMatching_WithMMRDifferenceJustOverBoundary_ReturnsEmptyList()
-        {
-            // Arrange
-            var manager = new TestMatchManager();
-            var player1 = new TestMatcherInfo(1, 1000);
-            var player2 = new TestMatcherInfo(2, 1101); // 101 MMR difference (just over boundary)
-
-            manager.Enqueue(player1);
-            manager.Enqueue(player2);
-
-            // Act
-            var result = manager.ProcessMatching();
-
-            // Assert
-            Assert.NotNull(result);
             Assert.Empty(result);
+            Assert.Equal(2, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_QueueCountAfterSuccessfulMatch_DecreasesBy2()
+        public void _009_ProcessMatching_QueueCountAfterSuccessfulMatch_DecreasesBy2()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
             var player2 = new TestMatcherInfo(2, 1050);
@@ -287,44 +257,34 @@ namespace LCH_RTS_TEST
             manager.Enqueue(player1);
             manager.Enqueue(player2);
             manager.Enqueue(player3);
+            manager.CurrentTimeMsec = 0;
 
-            Assert.Equal(3, manager.GetQueueCount());
-
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Single(result);
-            Assert.Equal(1, manager.GetQueueCount()); // Only player3 should remain
+            Assert.Equal(1, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_QueueCountAfterFailedMatch_RemainsUnchanged()
+        public void _010_ProcessMatching_QueueCountAfterFailedMatch_RemainsUnchanged()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
-            var player2 = new TestMatcherInfo(2, 1200); // Too far apart
+            var player2 = new TestMatcherInfo(2, 1200);
 
             manager.Enqueue(player1);
             manager.Enqueue(player2);
+            manager.CurrentTimeMsec = 0;
 
-            Assert.Equal(2, manager.GetQueueCount());
-
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
             Assert.Empty(result);
-            Assert.Equal(2, manager.GetQueueCount()); // Both players should remain
+            Assert.Equal(2, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_ManyPlayers_Matching()
+        public void _011_ProcessMatching_ManyPlayers_GenerateMultipleMatches()
         {
-            // Arrange
             var manager = new TestMatchManager();
             var player1 = new TestMatcherInfo(1, 1000);
             var player2 = new TestMatcherInfo(2, 1050);
@@ -335,78 +295,51 @@ namespace LCH_RTS_TEST
             manager.Enqueue(player2);
             manager.Enqueue(player3);
             manager.Enqueue(player4);
+            manager.CurrentTimeMsec = 0;
 
-            // Act
             var result = manager.ProcessMatching();
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player2.PlayerId, result[0].Item2.PlayerId);
-
-            Assert.Equal(player3.PlayerId, result[1].Item1.PlayerId);
-            Assert.Equal(player4.PlayerId, result[1].Item2.PlayerId);
-        }
-
-        [Fact]
-        public void ProcessMatching_WindowExpansion_AfterFailedMatch()
-        {
-            // Arrange
-            var manager = new TestMatchManager();
-            var player1 = new TestMatcherInfo(1, 1000);
-            var player2 = new TestMatcherInfo(2, 1150); // MMR 차이 150 (초기 윈도우 100 초과)
-
-            manager.Enqueue(player1);
-            manager.Enqueue(player2);
-
-            _ = manager.ProcessMatching();
-
-            // Act - 두 번째 매칭 시도 (윈도우가 200으로 확장되어 성공 예상)
-            var result = manager.ProcessMatching();
-
-            // Assert - 두 번째 시도는 성공 (윈도우가 확장되어 MMR 차이 150이 허용됨)
-            Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal(player1.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player2.PlayerId, result[0].Item2.PlayerId);
+            Assert.Equal(2, result.Count);
+            Assert.Equal(player1.PlayerId, result[0].First.PlayerId);
+            Assert.Equal(player2.PlayerId, result[0].Second.PlayerId);
+            Assert.Equal(player3.PlayerId, result[1].First.PlayerId);
+            Assert.Equal(player4.PlayerId, result[1].Second.PlayerId);
             Assert.Equal(0, manager.GetQueueCount());
         }
 
         [Fact]
-        public void ProcessMatching_WindowReset_AfterSuccessfulMatch()
+        public void _012_ProcessMatching_MatchWindowExpandsWithElapsedTime()
         {
-            // Arrange
             var manager = new TestMatchManager();
-            var player1 = new TestMatcherInfo(1, 1100);
-            var player2 = new TestMatcherInfo(2, 1050);
-            var player3 = new TestMatcherInfo(3, 1000);
-            var player4 = new TestMatcherInfo(4, 1150);
+            var player1 = new TestMatcherInfo(1, 1000);
+            var player2 = new TestMatcherInfo(2, 1200);
 
             manager.Enqueue(player1);
             manager.Enqueue(player2);
-            manager.Enqueue(player3);
-            manager.Enqueue(player4);
 
-            // Act
-            _ = manager.ProcessMatching();
-            var result = manager.ProcessMatching();
+            manager.CurrentTimeMsec = 0;
+            var firstAttempt = manager.ProcessMatching();
+            Assert.Empty(firstAttempt);
+            Assert.Equal(2, manager.GetQueueCount());
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(player3.PlayerId, result[0].Item1.PlayerId);
-            Assert.Equal(player4.PlayerId, result[0].Item2.PlayerId);
+            manager.CurrentTimeMsec = 999;
+            var almostThreshold = manager.ProcessMatching();
+            Assert.Empty(almostThreshold);
+            Assert.Equal(2, manager.GetQueueCount());
+
+            manager.CurrentTimeMsec = 1_000;
+            var thresholdMatch = manager.ProcessMatching();
+
+            Assert.Single(thresholdMatch);
+            Assert.Equal(0, manager.GetQueueCount());
         }
 
         [Fact]
-        public void PlayerIdGen_Success()
+        public void _013_PlayerIdGen_Success()
         {
-            //Arange
             var id1 = PlayerIdGenerator.Instance.NextId();
             var id2 = PlayerIdGenerator.Instance.NextId();
-            
-            //Act
-            
-            //Assert
+
             Assert.NotEqual(id1, id2);
             Assert.Equal(id1 + 1, id2);
         }
